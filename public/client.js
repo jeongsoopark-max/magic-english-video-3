@@ -48,6 +48,28 @@ const chatPanel = document.getElementById('chat-panel');
 const chatLog = document.getElementById('chat-log');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
+const boardOnlyCheckbox = document.getElementById('board-only-checkbox');
+const callMain = document.querySelector('.call-main');
+
+// Whiteboard DOM
+const whiteboardBtn = document.getElementById('whiteboard-btn');
+const whiteboardPanel = document.getElementById('whiteboard-panel');
+const wbCanvas = document.getElementById('wb-canvas');
+const wbPdfCanvas = document.getElementById('wb-pdf-canvas');
+const wbSizeInput = document.getElementById('wb-size');
+const wbPenBtn = document.getElementById('wb-pen-btn');
+const wbEraserBtn = document.getElementById('wb-eraser-btn');
+const wbClearBtn = document.getElementById('wb-clear-btn');
+const wbCloseBtn = document.getElementById('wb-close-btn');
+const wbAddPdfBtn = document.getElementById('wb-add-pdf-btn');
+const wbAddBlankBtn = document.getElementById('wb-add-blank-btn');
+const wbPdfInput = document.getElementById('wb-pdf-input');
+const wbPrevBtn = document.getElementById('wb-prev-btn');
+const wbNextBtn = document.getElementById('wb-next-btn');
+const wbPageIndicator = document.getElementById('wb-page-indicator');
+const wbLoading = document.getElementById('wb-loading');
+const wbSharePngBtn = document.getElementById('wb-share-png-btn');
+const wbSharePdfBtn = document.getElementById('wb-share-pdf-btn');
 
 // State
 let localStream = null;      // camera + mic, from getUserMedia
@@ -56,6 +78,7 @@ let sharingScreen = false;
 let myName = '';
 let currentRoom = null;
 let isHost = false;
+let whiteboardOnlyMode = false;   // this device joined as an iPad drawing tablet
 let pendingList = [];              // host-only: people waiting for admission
 const peerConnections = new Map(); // socketId -> RTCPeerConnection
 const peerNames = new Map();       // socketId -> name
@@ -134,6 +157,10 @@ generateRoomBtn.addEventListener('click', () => {
   const params = new URLSearchParams(window.location.search);
   const roomParam = params.get('room');
   if (roomParam) roomInput.value = roomParam;
+  // ?board=1 pre-selects "필기 전용" (handy for a bookmark on the iPad).
+  if (params.get('board') === '1' && boardOnlyCheckbox) {
+    boardOnlyCheckbox.checked = true;
+  }
 })();
 
 joinBtn.addEventListener('click', joinRoom);
@@ -146,16 +173,45 @@ async function joinRoom() {
   const name = nameInput.value.trim() || 'Guest';
   const roomId = roomInput.value.trim();
   const requireApproval = approvalCheckbox.checked;
+  whiteboardOnlyMode = !!(boardOnlyCheckbox && boardOnlyCheckbox.checked);
 
   if (!roomId) {
     joinError.textContent = '수업 코드를 입력해주세요.';
     return;
   }
 
+  // Whiteboard-only device (iPad): no camera/mic at all — it just draws.
+  if (whiteboardOnlyMode) {
+    myName = name;
+    currentRoom = roomId;
+    socket.emit('join-room', { roomId, name, requireApproval, whiteboardOnly: true }, (res) => {
+      if (!res || !res.ok) {
+        joinError.textContent = '입장에 실패했어요. 다시 시도해주세요.';
+        currentRoom = null;
+        return;
+      }
+      isHost = false;
+      document.body.classList.add('wb-only');
+      enterCallScreen([], res.sharingPeerId, res.whiteboard);
+      // The iPad opens the board for everyone as soon as it joins.
+      openWhiteboard(true);
+    });
+    return;
+  }
+
+  if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+    // getUserMedia 자체가 없는 경우 = 카카오톡 등 인앱브라우저일 가능성이 높다.
+    joinError.textContent =
+      '이 브라우저에서는 카메라·마이크를 쓸 수 없어요. 크롬 또는 사파리로 열어주세요.';
+    return;
+  }
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   } catch (err) {
-    joinError.textContent = '카메라/마이크 접근을 허용해주세요.';
+    joinError.textContent =
+      (err && err.name === 'NotAllowedError')
+        ? '카메라/마이크 접근을 허용해주세요.'
+        : '카메라/마이크를 사용할 수 없어요. 다른 앱이 사용 중인지 확인하거나 크롬/사파리로 열어주세요.';
     return;
   }
 
@@ -181,18 +237,21 @@ async function joinRoom() {
     }
 
     isHost = !!res.isHost;
-    enterCallScreen(res.peers, res.sharingPeerId);
+    enterCallScreen(res.peers, res.sharingPeerId, res.whiteboard);
   });
 }
 
-function enterCallScreen(peers, sharingPeerId) {
+function enterCallScreen(peers, sharingPeerId, whiteboard) {
   joinScreen.classList.add('hidden');
   waitingScreen.classList.add('hidden');
   callScreen.classList.remove('hidden');
   roomLabel.textContent = `수업 코드: ${currentRoom}`;
 
   activeScreenShareId = sharingPeerId || null;
-  addVideoTile('local', 'local', `${myName} (나)`, localStream, true);
+
+  if (!whiteboardOnlyMode) {
+    addVideoTile('local', 'local', `${myName} (나)`, localStream, true);
+  }
   updateParticipantCount();
 
   pendingBtn.classList.toggle('hidden', !isHost);
@@ -201,11 +260,17 @@ function enterCallScreen(peers, sharingPeerId) {
     pendingList = [];
   }
 
-  // Connect out to everyone already in the room.
-  peers.forEach((peer) => {
-    peerNames.set(peer.id, peer.name);
-    createPeerConnection(peer.id, true);
-  });
+  // Connect out to everyone already in the room (whiteboard device skips this).
+  if (!whiteboardOnlyMode) {
+    peers.forEach((peer) => {
+      peerNames.set(peer.id, peer.name);
+      createPeerConnection(peer.id, true);
+    });
+  }
+
+  // Sync the shared whiteboard: replay existing strokes, and open it if it
+  // was already active when we joined.
+  if (whiteboard) applyWhiteboardSnapshot(whiteboard);
 }
 
 // Host receives this whenever the pending queue changes.
@@ -265,10 +330,21 @@ pendingBtn.addEventListener('click', () => {
 });
 
 // Waiting student: the host made a decision.
-socket.on('admission-result', ({ approved, peers, maxSize, reason, sharingPeerId }) => {
+socket.on('admission-result', ({ approved, peers, maxSize, reason, sharingPeerId, whiteboard }) => {
   if (approved) {
     isHost = false;
-    enterCallScreen(peers, sharingPeerId);
+    // Tell the server (from our own socket) to finalize our room membership
+    // BEFORE we start creating peer connections — otherwise our WebRTC
+    // signals would be dropped and we'd never actually connect.
+    let entered = false;
+    const enterOnce = () => {
+      if (entered) return;
+      entered = true;
+      enterCallScreen(peers, sharingPeerId, whiteboard);
+    };
+    socket.emit('confirm-admission', { roomId: currentRoom }, enterOnce);
+    // Fallback: if the ack doesn't come back promptly, enter anyway.
+    setTimeout(enterOnce, 1500);
     return;
   }
 
@@ -320,6 +396,7 @@ socket.on('screen-share-status', ({ id, sharing }) => {
 });
 
 socket.on('signal', async ({ from, data }) => {
+  if (whiteboardOnlyMode) return; // drawing tablet does no WebRTC
   let pc = peerConnections.get(from);
 
   if (data.type === 'offer') {
@@ -636,15 +713,43 @@ function updateLocalPreview() {
   localTile?.classList.toggle('local', mirror);
 }
 
+// 화면 공유는 데스크톱 브라우저에서만 지원된다 (모바일 크롬/사파리 미지원).
+// 학생은 대부분 스마트폰이므로, 지원되지 않는 기기에서는 버튼을 숨겨 혼란을 없앤다.
+const screenShareSupported =
+  !!(navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function');
+if (!screenShareSupported && screenBtn) {
+  screenBtn.style.display = 'none';
+}
+
 screenBtn.addEventListener('click', () => {
   if (sharingScreen) stopScreenShare(); else startScreenShare();
 });
 
 async function startScreenShare() {
+  if (!screenShareSupported) {
+    triggerToastIfAvailable('화면 공유는 PC(데스크톱) 브라우저에서만 가능합니다.');
+    return;
+  }
   try {
-    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    // 필기(굿노트/PDF) 공유에 최적화: 프레임레이트를 낮추면 인코더가 남는
+    // 대역폭을 '움직임'이 아니라 '해상도·선명도'에 쓰기 때문에 글씨가 또렷해진다.
+    screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        frameRate: { ideal: 12, max: 15 },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
+      audio: false,
+    });
   } catch (err) {
     return; // user cancelled the "choose what to share" picker
+  }
+
+  // contentHint='detail'은 브라우저/WebRTC에게 "부드러운 움직임보다 세밀함이
+  // 중요하다"고 알려준다 — 손글씨·텍스트 공유에 딱 맞는 설정.
+  const shareTrack = screenStream.getVideoTracks()[0];
+  if (shareTrack && 'contentHint' in shareTrack) {
+    shareTrack.contentHint = 'detail';
   }
 
   sharingScreen = true;
@@ -660,7 +765,7 @@ async function startScreenShare() {
 
   // If sharing is stopped via the browser's own "Stop sharing" control
   // (not our button), revert automatically.
-  screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
+  if (shareTrack) shareTrack.onended = () => stopScreenShare();
 }
 
 function stopScreenShare() {
@@ -685,7 +790,584 @@ function stopScreenShare() {
   socket.emit('screen-share', { sharing: false });
 }
 
-// ---- Virtual background --------------------------------------------------
+// ======================= Shared multi-page whiteboard ====================
+// The board is a list of PAGES. Each page is blank or shows one page of an
+// uploaded PDF, and keeps its own pen strokes (so handwriting stays when you
+// flip pages). The teacher uploads a PDF before class; each PDF page becomes a
+// board. Page flips and strokes are synced to everyone over Socket.io in
+// coordinates NORMALIZED to the page rectangle, so handwriting lands in the
+// same spot on every screen size. PDFs render locally with PDF.js.
+
+const wbCtx = wbCanvas ? wbCanvas.getContext('2d') : null;
+const wbPdfCtx = wbPdfCanvas ? wbPdfCanvas.getContext('2d') : null;
+let wbActive = false;
+let wbTool = 'pen';
+let wbColor = '#111111';
+let wbSize = 4;
+let wbDrawing = false;
+let wbCurrentId = null;
+let wbPenSeen = false;
+let wbSendBuffer = [];
+let wbSendTimer = null;
+
+// Pages: [{ id, type:'blank'|'pdf', pdfId, pageIndex, aspect, strokes: Map }]
+let wbPages = [{ id: 'pg-init', type: 'blank', aspect: 4 / 3, strokes: new Map() }];
+let wbCurrentPage = 0;
+
+// PDF.js document handles, keyed by pdfId, plus a per-page rendered-image cache.
+const wbPdfDocs = new Map();        // pdfId -> PDFDocumentProxy
+const wbPageImageCache = new Map(); // pageId -> HTMLCanvasElement (rendered PDF page)
+
+function wbGenId() {
+  return (socket.id || 'x').slice(0, 6) + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+}
+
+function currentPageObj() {
+  return wbPages[wbCurrentPage] || null;
+}
+
+// The rectangle (in canvas pixels) where the current page is drawn, letterboxed
+// to the page's aspect ratio and centered. Strokes are normalized within this
+// rect so they stay glued to the page/PDF regardless of screen shape.
+function pageRect() {
+  const pg = currentPageObj();
+  const aspect = (pg && pg.aspect) ? pg.aspect : 4 / 3; // width/height
+  const W = wbCanvas.width, H = wbCanvas.height;
+  let w = W, h = W / aspect;
+  if (h > H) { h = H; w = H * aspect; }
+  return { x: (W - w) / 2, y: (H - h) / 2, w, h };
+}
+
+function sizeWhiteboardCanvas() {
+  if (!wbCanvas || whiteboardPanel.classList.contains('hidden')) return;
+  const wrap = wbCanvas.parentElement;
+  const rect = wrap.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const targetW = Math.max(1, Math.round(rect.width * dpr));
+  const targetH = Math.max(1, Math.round(rect.height * dpr));
+  let changed = false;
+  [wbCanvas, wbPdfCanvas].forEach((c) => {
+    if (c && (c.width !== targetW || c.height !== targetH)) {
+      c.width = targetW; c.height = targetH; changed = true;
+    }
+  });
+  if (changed) renderCurrentPage();
+}
+
+// Render the current page: PDF background (if any) + all its strokes.
+function renderCurrentPage() {
+  if (!wbCtx) return;
+  wbCtx.clearRect(0, 0, wbCanvas.width, wbCanvas.height);
+  if (wbPdfCtx) wbPdfCtx.clearRect(0, 0, wbPdfCanvas.width, wbPdfCanvas.height);
+
+  const pg = currentPageObj();
+  if (!pg) { updatePageIndicator(); return; }
+
+  const r = pageRect();
+  // White page background (so blank pages and PDF letterbox look like paper).
+  if (wbPdfCtx) {
+    wbPdfCtx.fillStyle = '#ffffff';
+    wbPdfCtx.fillRect(r.x, r.y, r.w, r.h);
+    const img = wbPageImageCache.get(pg.id);
+    if (img) wbPdfCtx.drawImage(img, r.x, r.y, r.w, r.h);
+  }
+
+  // Draw all strokes for this page.
+  pg.strokes.forEach((stroke) => drawStrokeSegment(stroke, 0));
+  updatePageIndicator();
+
+  // If this is a PDF page we haven't rendered yet, kick off rendering.
+  if (pg.type === 'pdf' && !wbPageImageCache.get(pg.id)) {
+    ensurePdfPageRendered(pg);
+  }
+}
+
+function drawStrokeSegment(stroke, fromIdx) {
+  if (!wbCtx || stroke.points.length === 0) return;
+  const r = pageRect();
+  const toPx = (p) => ({ x: r.x + p.x * r.w, y: r.y + p.y * r.h });
+  wbCtx.lineCap = 'round';
+  wbCtx.lineJoin = 'round';
+  if (stroke.erase) {
+    wbCtx.globalCompositeOperation = 'destination-out';
+    wbCtx.strokeStyle = 'rgba(0,0,0,1)';
+  } else {
+    wbCtx.globalCompositeOperation = 'source-over';
+    wbCtx.strokeStyle = stroke.color;
+  }
+  // Scale line width by the page height so it looks consistent across screens.
+  wbCtx.lineWidth = stroke.width * (r.h / 800) * (window.devicePixelRatio || 1) + 0.4;
+
+  const pts = stroke.points;
+  if (fromIdx === 0 && pts.length === 1) {
+    const p = toPx(pts[0]);
+    wbCtx.beginPath();
+    wbCtx.arc(p.x, p.y, wbCtx.lineWidth / 2, 0, Math.PI * 2);
+    wbCtx.fillStyle = stroke.erase ? 'rgba(0,0,0,1)' : stroke.color;
+    wbCtx.fill();
+    wbCtx.globalCompositeOperation = 'source-over';
+    return;
+  }
+  const start = Math.max(1, fromIdx);
+  const p0 = toPx(pts[start - 1]);
+  wbCtx.beginPath();
+  wbCtx.moveTo(p0.x, p0.y);
+  for (let i = start; i < pts.length; i++) {
+    const p = toPx(pts[i]);
+    wbCtx.lineTo(p.x, p.y);
+  }
+  wbCtx.stroke();
+  wbCtx.globalCompositeOperation = 'source-over';
+}
+
+// ---- PDF rendering (PDF.js) ----
+async function loadPdfDoc(pdfId) {
+  if (wbPdfDocs.has(pdfId)) return wbPdfDocs.get(pdfId);
+  if (!window.pdfjsLib) throw new Error('pdfjs-not-ready');
+  const url = `/room-pdf/${encodeURIComponent(currentRoom)}/${encodeURIComponent(pdfId)}`;
+  const task = window.pdfjsLib.getDocument(url);
+  const doc = await task.promise;
+  wbPdfDocs.set(pdfId, doc);
+  return doc;
+}
+
+async function ensurePdfPageRendered(pg) {
+  if (!pg || pg.type !== 'pdf' || wbPageImageCache.get(pg.id)) return;
+  try {
+    if (wbLoading) wbLoading.classList.remove('hidden');
+    const doc = await loadPdfDoc(pg.pdfId);
+    const page = await doc.getPage(pg.pageIndex);
+    // Render at a crisp scale for legibility.
+    const baseViewport = page.getViewport({ scale: 1 });
+    const targetWidth = 1400;
+    const scale = targetWidth / baseViewport.width;
+    const viewport = page.getViewport({ scale });
+    const off = document.createElement('canvas');
+    off.width = Math.round(viewport.width);
+    off.height = Math.round(viewport.height);
+    const offCtx = off.getContext('2d');
+    await page.render({ canvasContext: offCtx, viewport }).promise;
+    wbPageImageCache.set(pg.id, off);
+    if (currentPageObj() && currentPageObj().id === pg.id) renderCurrentPage();
+  } catch (e) {
+    triggerToastIfAvailable('PDF 페이지를 불러오지 못했어요.');
+  } finally {
+    if (wbLoading) wbLoading.classList.add('hidden');
+  }
+}
+
+// Read a PDF file locally to learn its page count + aspect ratios (so we can
+// tell the server how many boards to create), and upload the bytes.
+async function addPdfFile(file) {
+  if (!window.pdfjsLib) {
+    triggerToastIfAvailable('PDF 기능 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+    return;
+  }
+  try {
+    if (wbLoading) wbLoading.classList.remove('hidden');
+    const buf = await file.arrayBuffer();
+
+    // Upload the bytes to the server first.
+    const resp = await fetch(`/upload-pdf/${encodeURIComponent(currentRoom)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/pdf' },
+      body: buf,
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || 'upload-failed');
+    const pdfId = data.pdfId;
+
+    // Parse locally to get page count + per-page aspect ratios.
+    const doc = await window.pdfjsLib.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
+    wbPdfDocs.set(pdfId, doc);
+    const pages = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const vp = page.getViewport({ scale: 1 });
+      pages.push({ pageIndex: i, aspect: vp.width / vp.height });
+    }
+    socket.emit('wb-add-pdf', { pdfId, pages });
+  } catch (e) {
+    triggerToastIfAvailable('PDF를 추가하지 못했어요. 파일을 확인해주세요.');
+  } finally {
+    if (wbLoading) wbLoading.classList.add('hidden');
+  }
+}
+
+// ---- Local drawing input (Apple Pencil friendly) ----
+function wbPointerDown(e) {
+  if (!wbActive) return;
+  if (e.pointerType === 'touch' && wbPenSeen) return;
+  if (e.pointerType === 'pen') wbPenSeen = true;
+  const pg = currentPageObj();
+  if (!pg) return;
+
+  wbDrawing = true;
+  wbCurrentId = wbGenId();
+  const p = wbNormPoint(e);
+  const stroke = {
+    color: wbColor,
+    width: wbTool === 'eraser' ? Math.max(wbSize * 2.5, 12) : wbSize,
+    erase: wbTool === 'eraser',
+    points: [p],
+  };
+  pg.strokes.set(wbCurrentId, stroke);
+  drawStrokeSegment(stroke, 0);
+  wbQueueSend(p);
+  try { wbCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+  e.preventDefault();
+}
+
+function wbPointerMove(e) {
+  if (!wbDrawing || !wbCurrentId) return;
+  if (e.pointerType === 'touch' && wbPenSeen) return;
+  const pg = currentPageObj();
+  const stroke = pg && pg.strokes.get(wbCurrentId);
+  if (!stroke) return;
+  const events = (e.getCoalescedEvents && e.getCoalescedEvents().length)
+    ? e.getCoalescedEvents() : [e];
+  const fromIdx = stroke.points.length;
+  events.forEach((ev) => {
+    const p = wbNormPoint(ev);
+    stroke.points.push(p);
+    wbQueueSend(p);
+  });
+  drawStrokeSegment(stroke, fromIdx);
+  e.preventDefault();
+}
+
+function wbPointerUp() {
+  if (!wbDrawing) return;
+  wbDrawing = false;
+  wbFlushSend(true);
+  wbCurrentId = null;
+}
+
+// Normalize a pointer position to 0..1 WITHIN the page rectangle.
+function wbNormPoint(e) {
+  const rect = wbCanvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const px = (e.clientX - rect.left) * dpr;
+  const py = (e.clientY - rect.top) * dpr;
+  const r = pageRect();
+  return {
+    x: Math.min(1, Math.max(0, (px - r.x) / r.w)),
+    y: Math.min(1, Math.max(0, (py - r.y) / r.h)),
+  };
+}
+
+function wbQueueSend(point) {
+  wbSendBuffer.push(point);
+  if (!wbSendTimer) wbSendTimer = setTimeout(() => wbFlushSend(false), 40);
+}
+function wbFlushSend(done) {
+  if (wbSendTimer) { clearTimeout(wbSendTimer); wbSendTimer = null; }
+  const pg = currentPageObj();
+  if (!wbCurrentId || !pg) { wbSendBuffer = []; return; }
+  const stroke = pg.strokes.get(wbCurrentId);
+  if (!stroke) { wbSendBuffer = []; return; }
+  if (wbSendBuffer.length === 0 && !done) return;
+  socket.emit('wb-stroke', {
+    pageId: pg.id, id: wbCurrentId, color: stroke.color, width: stroke.width,
+    erase: stroke.erase, points: wbSendBuffer, done: !!done,
+  });
+  wbSendBuffer = [];
+}
+
+// ---- Receiving strokes from others ----
+socket.on('wb-stroke', ({ pageId, id, color, width, erase, points }) => {
+  if (!pageId || !id || !Array.isArray(points)) return;
+  const pg = wbPages.find((p) => p.id === pageId);
+  if (!pg) return;
+  let stroke = pg.strokes.get(id);
+  if (!stroke) {
+    stroke = { color: color || '#111', width: width || 3, erase: !!erase, points: [] };
+    pg.strokes.set(id, stroke);
+  }
+  const fromIdx = stroke.points.length;
+  points.forEach((p) => stroke.points.push(p));
+  if (wbActive && pg.id === (currentPageObj() && currentPageObj().id)) {
+    drawStrokeSegment(stroke, fromIdx === 0 ? 0 : fromIdx);
+  }
+});
+
+socket.on('wb-clear', ({ pageId } = {}) => {
+  if (pageId) {
+    const pg = wbPages.find((p) => p.id === pageId);
+    if (pg) pg.strokes.clear();
+  } else {
+    wbPages.forEach((p) => p.strokes.clear());
+  }
+  renderCurrentPage();
+});
+
+socket.on('wb-active', ({ active }) => {
+  if (active) showWhiteboard(); else hideWhiteboard();
+});
+
+// New/changed page list from the server (after add-pdf / add-blank).
+socket.on('wb-pages', (payload) => {
+  applyPageList(payload);
+  renderCurrentPage();
+});
+
+// Someone navigated to a page — follow along.
+socket.on('wb-page', ({ index }) => {
+  if (typeof index !== 'number') return;
+  wbCurrentPage = Math.max(0, Math.min(index, wbPages.length - 1));
+  renderCurrentPage();
+});
+
+// Merge a server page list (metadata) into our local pages, preserving any
+// strokes we already have for pages that still exist.
+function applyPageList(payload) {
+  const oldById = new Map(wbPages.map((p) => [p.id, p]));
+  wbPages = (payload.pages || []).map((meta) => {
+    const existing = oldById.get(meta.id);
+    return {
+      id: meta.id,
+      type: meta.type,
+      pdfId: meta.pdfId,
+      pageIndex: meta.pageIndex,
+      aspect: meta.aspect || 4 / 3,
+      strokes: existing ? existing.strokes : new Map(),
+    };
+  });
+  if (wbPages.length === 0) {
+    wbPages = [{ id: 'pg-init', type: 'blank', aspect: 4 / 3, strokes: new Map() }];
+  }
+  if (typeof payload.currentPage === 'number') {
+    wbCurrentPage = Math.max(0, Math.min(payload.currentPage, wbPages.length - 1));
+  } else {
+    wbCurrentPage = Math.min(wbCurrentPage, wbPages.length - 1);
+  }
+}
+
+// Full snapshot on join: pages + strokes + current page + active.
+function applyWhiteboardSnapshot(snapshot) {
+  wbPageImageCache.clear();
+  wbPages = (snapshot.pages || []).map((pg) => {
+    const strokes = new Map();
+    (pg.strokes || []).forEach((s) => {
+      strokes.set(s.id, { color: s.color, width: s.width, erase: !!s.erase, points: s.points || [] });
+    });
+    return { id: pg.id, type: pg.type, pdfId: pg.pdfId, pageIndex: pg.pageIndex, aspect: pg.aspect || 4 / 3, strokes };
+  });
+  if (wbPages.length === 0) {
+    wbPages = [{ id: 'pg-init', type: 'blank', aspect: 4 / 3, strokes: new Map() }];
+  }
+  wbCurrentPage = Math.max(0, Math.min(snapshot.currentPage || 0, wbPages.length - 1));
+  if (snapshot.active) showWhiteboard(); else if (!whiteboardOnlyMode) hideWhiteboard();
+  if (wbActive) renderCurrentPage();
+}
+
+// ---- Navigation ----
+function gotoPage(index, broadcast) {
+  const n = Math.max(0, Math.min(index, wbPages.length - 1));
+  wbCurrentPage = n;
+  renderCurrentPage();
+  if (broadcast) socket.emit('wb-page', { index: n });
+}
+function updatePageIndicator() {
+  if (wbPageIndicator) wbPageIndicator.textContent = `${wbCurrentPage + 1} / ${wbPages.length}`;
+}
+
+// ---- Open / close ----
+function openWhiteboard(broadcast) {
+  showWhiteboard();
+  if (broadcast) socket.emit('wb-open');
+}
+function closeWhiteboard(broadcast) {
+  hideWhiteboard();
+  if (broadcast) socket.emit('wb-close');
+}
+function showWhiteboard() {
+  wbActive = true;
+  whiteboardPanel.classList.remove('hidden');
+  if (callMain) callMain.classList.add('wb-active');
+  if (whiteboardBtn) { whiteboardBtn.classList.add('active'); whiteboardBtn.textContent = '필기 닫기'; }
+  requestAnimationFrame(() => { sizeWhiteboardCanvas(); renderCurrentPage(); });
+}
+function hideWhiteboard() {
+  wbActive = false;
+  whiteboardPanel.classList.add('hidden');
+  if (callMain) callMain.classList.remove('wb-active');
+  if (whiteboardBtn) { whiteboardBtn.classList.remove('active'); whiteboardBtn.textContent = '필기'; }
+}
+
+// ---- Toolbar wiring ----
+if (whiteboardBtn) {
+  whiteboardBtn.addEventListener('click', () => {
+    if (wbActive) closeWhiteboard(true); else openWhiteboard(true);
+  });
+}
+if (wbCloseBtn) wbCloseBtn.addEventListener('click', () => closeWhiteboard(true));
+if (wbClearBtn) {
+  wbClearBtn.addEventListener('click', () => {
+    const pg = currentPageObj();
+    if (!pg) return;
+    pg.strokes.clear();
+    renderCurrentPage();
+    socket.emit('wb-clear', { pageId: pg.id });
+  });
+}
+if (wbAddPdfBtn && wbPdfInput) {
+  wbAddPdfBtn.addEventListener('click', () => wbPdfInput.click());
+  wbPdfInput.addEventListener('change', async () => {
+    const files = Array.from(wbPdfInput.files || []);
+    for (const f of files) { await addPdfFile(f); }
+    wbPdfInput.value = '';
+  });
+}
+if (wbAddBlankBtn) wbAddBlankBtn.addEventListener('click', () => socket.emit('wb-add-blank'));
+if (wbPrevBtn) wbPrevBtn.addEventListener('click', () => gotoPage(wbCurrentPage - 1, true));
+if (wbNextBtn) wbNextBtn.addEventListener('click', () => gotoPage(wbCurrentPage + 1, true));
+
+// ---- Export / share (PNG for one page, PDF for all pages) ----
+// Renders one page (PDF background + its strokes) onto a fresh canvas at a
+// high, fixed resolution so the export is crisp regardless of screen size.
+async function renderPageToCanvas(pg, maxW) {
+  const targetW = maxW || 1600;
+  const aspect = pg.aspect || 4 / 3;
+  const out = document.createElement('canvas');
+  out.width = Math.round(targetW);
+  out.height = Math.round(targetW / aspect);
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, out.width, out.height);
+
+  if (pg.type === 'pdf') {
+    if (!wbPageImageCache.get(pg.id)) await ensurePdfPageRendered(pg);
+    const img = wbPageImageCache.get(pg.id);
+    if (img) ctx.drawImage(img, 0, 0, out.width, out.height);
+  }
+  // Strokes (normalized to the whole page rect = whole canvas here).
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  pg.strokes.forEach((stroke) => {
+    const pts = stroke.points;
+    if (!pts.length) return;
+    ctx.strokeStyle = stroke.erase ? '#ffffff' : stroke.color;
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.lineWidth = stroke.width * (out.height / 800) + 0.5;
+    if (pts.length === 1) {
+      ctx.beginPath();
+      ctx.arc(pts[0].x * out.width, pts[0].y * out.height, ctx.lineWidth / 2, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x * out.width, pts[0].y * out.height);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x * out.width, pts[i].y * out.height);
+    ctx.stroke();
+  });
+  return out;
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+// Share a file via the native share sheet (KakaoTalk shows up here on phones);
+// falls back to a normal download on desktop / unsupported browsers.
+async function shareOrDownload(blob, filename, title) {
+  const file = new File([blob], filename, { type: blob.type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: title || filename });
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // user cancelled the share sheet
+      // otherwise fall through to download
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  triggerToastIfAvailable('저장했어요. 저장된 파일을 카카오톡으로 공유하세요.');
+}
+
+if (wbSharePngBtn) {
+  wbSharePngBtn.addEventListener('click', async () => {
+    const pg = currentPageObj();
+    if (!pg) return;
+    try {
+      if (wbLoading) wbLoading.classList.remove('hidden');
+      const canvas = await renderPageToCanvas(pg, 1600);
+      const blob = await canvasToBlob(canvas, 'image/png');
+      const stamp = new Date().toISOString().slice(0, 10);
+      await shareOrDownload(blob, `필기_${wbCurrentPage + 1}쪽_${stamp}.png`, '수업 필기');
+    } catch (e) {
+      triggerToastIfAvailable('이미지를 만들지 못했어요.');
+    } finally {
+      if (wbLoading) wbLoading.classList.add('hidden');
+    }
+  });
+}
+
+if (wbSharePdfBtn) {
+  wbSharePdfBtn.addEventListener('click', async () => {
+    if (!wbPages.length) return;
+    const jspdfNS = window.jspdf || window.jsPDF;
+    const JsPDF = jspdfNS && (jspdfNS.jsPDF || jspdfNS);
+    if (!JsPDF) { triggerToastIfAvailable('PDF 기능 로딩 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+    try {
+      if (wbLoading) { wbLoading.textContent = 'PDF 만드는 중...'; wbLoading.classList.remove('hidden'); }
+      let doc = null;
+      for (let i = 0; i < wbPages.length; i++) {
+        const canvas = await renderPageToCanvas(wbPages[i], 1400);
+        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+        const orientation = canvas.width >= canvas.height ? 'landscape' : 'portrait';
+        if (!doc) {
+          doc = new JsPDF({ orientation, unit: 'px', format: [canvas.width, canvas.height] });
+        } else {
+          doc.addPage([canvas.width, canvas.height], orientation);
+        }
+        doc.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+      }
+      const stamp = new Date().toISOString().slice(0, 10);
+      const blob = doc.output('blob');
+      await shareOrDownload(blob, `수업필기_${stamp}.pdf`, '수업 필기');
+    } catch (e) {
+      triggerToastIfAvailable('PDF를 만들지 못했어요.');
+    } finally {
+      if (wbLoading) { wbLoading.textContent = 'PDF 불러오는 중...'; wbLoading.classList.add('hidden'); }
+    }
+  });
+}
+
+
+document.querySelectorAll('.wb-color').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    wbColor = btn.dataset.color; wbTool = 'pen';
+    document.querySelectorAll('.wb-color').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (wbPenBtn) wbPenBtn.classList.add('active');
+    if (wbEraserBtn) wbEraserBtn.classList.remove('active');
+  });
+});
+if (wbPenBtn) wbPenBtn.addEventListener('click', () => {
+  wbTool = 'pen'; wbPenBtn.classList.add('active');
+  if (wbEraserBtn) wbEraserBtn.classList.remove('active');
+});
+if (wbEraserBtn) wbEraserBtn.addEventListener('click', () => {
+  wbTool = 'eraser'; wbEraserBtn.classList.add('active');
+  if (wbPenBtn) wbPenBtn.classList.remove('active');
+});
+if (wbSizeInput) wbSizeInput.addEventListener('input', () => { wbSize = Number(wbSizeInput.value) || 4; });
+
+if (wbCanvas) {
+  wbCanvas.addEventListener('pointerdown', wbPointerDown);
+  wbCanvas.addEventListener('pointermove', wbPointerMove);
+  wbCanvas.addEventListener('pointerup', wbPointerUp);
+  wbCanvas.addEventListener('pointercancel', wbPointerUp);
+  wbCanvas.addEventListener('pointerleave', wbPointerUp);
+}
+window.addEventListener('resize', () => { if (wbActive) sizeWhiteboardCanvas(); });
+
+
+
 // Runs Google's MediaPipe Selfie Segmentation entirely in the browser: it
 // separates you from your background frame-by-frame, and we draw the
 // result onto a hidden canvas — you in front, a chosen picture (or a blurred

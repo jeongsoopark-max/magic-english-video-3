@@ -468,3 +468,133 @@ body {
   z-index: 50;
 }
 .mini-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===================== Shared whiteboard ===================== */
+.whiteboard-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.whiteboard-panel.hidden { display: none; }
+
+.wb-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  background: #f1f2f5;
+  border-bottom: 1px solid #dcdee3;
+}
+.wb-tools, .wb-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.wb-sep { width: 1px; height: 22px; background: #cfd2da; margin: 0 4px; }
+
+.wb-color {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #c3c6cf;
+  cursor: pointer;
+  padding: 0;
+}
+.wb-color.active { box-shadow: 0 0 0 2px #333; transform: scale(1.1); }
+
+.wb-tool-btn {
+  border: 1px solid #cfd2da;
+  background: #ffffff;
+  color: #333;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.wb-tool-btn:hover { background: #eceef2; }
+.wb-tool-btn.active { background: #333; color: #fff; border-color: #333; }
+
+.wb-size-label { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
+.wb-size-label input[type="range"] { width: 90px; }
+
+.wb-canvas-wrap { flex: 1; min-height: 0; position: relative; background: #ffffff; }
+#wb-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;         /* let pointer events handle drawing, no scroll */
+  cursor: crosshair;
+  display: block;
+}
+
+/* When the whiteboard is active, the video grid becomes a slim strip so the
+   board gets the room. */
+.call-main.wb-active .video-grid {
+  flex: none;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  height: 130px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px;
+}
+.call-main.wb-active .video-grid .tile {
+  height: 100%;
+  width: auto;
+  aspect-ratio: 4 / 3;
+  flex: none;
+  grid-template-columns: none;
+}
+.call-main { display: flex; flex-direction: column; }
+.call-main.wb-active { flex-direction: column; }
+
+/* Whiteboard-only device (the teacher's iPad): board fills the screen, no
+   video UI at all. */
+body.wb-only .call-header .pending-wrap,
+body.wb-only #toggle-chat-btn,
+body.wb-only #mic-btn,
+body.wb-only #cam-btn,
+body.wb-only #screen-btn,
+body.wb-only #whiteboard-btn,
+body.wb-only .bg-picker-wrap,
+body.wb-only #video-grid,
+body.wb-only #chat-panel {
+  display: none !important;
+}
+body.wb-only .whiteboard-panel { border-radius: 0; }
+body.wb-only #wb-close-btn { display: none; }  /* iPad closes by leaving */
+
+@media (max-width: 700px) {
+  .wb-toolbar { padding: 6px; }
+  .wb-tool-btn { padding: 6px 8px; font-size: 12px; }
+  .call-main.wb-active .video-grid { height: 96px; }
+}
+
+/* PDF background layer sits behind the pen canvas; both fill the wrap. */
+.wb-canvas-wrap { position: relative; }
+#wb-pdf-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  pointer-events: none;   /* drawing happens on the top canvas */
+}
+#wb-canvas { background: transparent; }   /* transparent so PDF shows through */
+
+.wb-loading {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.65); color: #fff; font-size: 13px;
+  padding: 6px 14px; border-radius: 8px; z-index: 3;
+}
+
+.wb-pagebar {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: 8px; background: #f1f2f5; border-top: 1px solid #dcdee3;
+}
+#wb-page-indicator { font-size: 13px; color: #333; min-width: 60px; text-align: center; }
+
+body.wb-only .wb-pagebar { background: #e9ebef; }
