@@ -1,0 +1,35 @@
+{
+  "classes": {
+    "basic": {
+      "meetLink": "class.html?room=basic",
+      "playlistLink": "https://drive.google.com/drive/folders/1RTTcFvRGGNEUFSi0VLXkin-GarBw9hid",
+      "driveLink": "https://drive.google.com/drive/folders/12iMQnFsQagQnPVW7Q2RcISGCaOwSMQod?usp=drive_link"
+    },
+    "grammar": {
+      "meetLink": "class.html?room=grammar",
+      "playlistLink": "https://drive.google.com/drive/folders/1PX-DM6vB9Mugq7hYTW-XDHsoyViikIho",
+      "driveLink": "https://drive.google.com/drive/folders/1sJplWPPBv0F2FSmq7TWEZVDJPBh6v-L9?usp=drive_link"
+    },
+    "intermediate": {
+      "meetLink": "class.html?room=intermediate",
+      "playlistLink": "https://drive.google.com/drive/folders/13Di9NJJGKJTD2lHsS95RN5psvb7U6RaY",
+      "driveLink": "https://drive.google.com/drive/folders/1vNuffBohWAwdWav4nFpoW2xLHI2pmAY_?usp=drive_link"
+    },
+    "advanced": {
+      "meetLink": "class.html?room=advanced",
+      "playlistLink": "https://drive.google.com/drive/folders/1hq-gLoaTmssCxR_bryueuXijGMTCsR6W",
+      "driveLink": "https://drive.google.com/drive/folders/1DGvWoUFCf367Dw21llcwDCy2dNt0P_uS?usp=drive_link"
+    },
+    "private": {
+      "meetLink": "class.html?room=private",
+      "playlistLink": "https://drive.google.com/drive/folders/1hK_9ud_KU77UJ3M9HpD7rM7lHxYCDiLg",
+      "driveLink": "https://drive.google.com/drive/folders/19LOEvdvTW0gPH6jd3Sin_wB59lmi4_qn?usp=drive_link"
+    }
+  },
+  "globals": {
+    "vocab": "https://magic-vocabulary-sjlherfhfppdwp3tgvppqe.streamlit.app/",
+    "exam": "https://drive.google.com/drive/folders/12m1z1Y64CLA27nGrwpDsW8eMNz62VvD8",
+    "studentForm": "https://forms.gle/1FvJroxUVWzswa5v9",
+    "adminFormFolder": "https://drive.google.com/drive/folders/1HuUKm9223tywPEbtooe33A4-8BQdF0L_"
+  }
+}
