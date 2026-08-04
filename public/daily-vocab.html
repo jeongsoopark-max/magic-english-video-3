@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>데일리 수능 어휘 · MAGIC ENGLISH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  :root{
+    --bg:#eceef5; --surface:#ffffff; --ink:#1f2438; --muted:#6b7185;
+    --line:#e2e5ef; --soft:#f4f5fa; --accent:#4f46e5; --accent-soft:#eef0fe;
+    --ok:#059669; --shadow:0 18px 44px -22px rgba(31,36,56,.4); --radius:20px;
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{min-height:100vh;display:flex;justify-content:center;padding:22px 14px 40px;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:560px}
+  .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .brand{display:flex;flex-direction:column;line-height:1.15}
+  .brand .kicker{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .brand .name{font-size:18px;font-weight:800;letter-spacing:-.01em}
+  .streak{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 13px 8px 11px;box-shadow:var(--shadow)}
+  .flame{font-size:18px;transform-origin:bottom center}
+  .streak b{font-size:16px;font-variant-numeric:tabular-nums}
+  .streak span{font-size:12px;color:var(--muted)}
+  @keyframes flare{0%{transform:scale(1) rotate(0)}30%{transform:scale(1.5) rotate(-8deg)}60%{transform:scale(1.2) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+  .flame.fire{animation:flare .7s ease}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tab{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 6px;cursor:pointer;transition:.18s;text-align:center;line-height:1.25}
+  .tab .t{font-size:13.5px;font-weight:700}
+  .tab .s{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .tab[aria-selected="true"]{color:#fff;border-color:transparent;box-shadow:var(--shadow)}
+  .tab[aria-selected="true"] .s{color:rgba(255,255,255,.85)}
+  .tab:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .daybadge{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:10px}
+  .daybadge .chip{background:var(--accent-soft);color:var(--accent);font-weight:700;padding:3px 10px;border-radius:99px;font-size:11.5px}
+  .meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:12.5px;color:var(--muted)}
+  .track{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:18px}
+  .fill{height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .3s ease}
+  .stage{perspective:1400px}
+  .card{position:relative;min-height:290px;cursor:pointer}
+  .face{position:absolute;inset:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);backface-visibility:hidden;padding:22px 22px;display:flex;flex-direction:column;transition:transform .55s cubic-bezier(.4,.1,.2,1)}
+  .front{transform:rotateY(0)}
+  .back{transform:rotateY(180deg);text-align:left}
+  .card.flipped .front{transform:rotateY(-180deg)}
+  .card.flipped .back{transform:rotateY(0)}
+  .card::after{content:"";display:block;min-height:290px}
+  .rowtop{display:flex;align-items:center;justify-content:space-between}
+  .tag{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:99px}
+  .spk{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:.15s;color:var(--accent)}
+  .spk:hover{background:var(--accent-soft);transform:scale(1.05)}
+  .spk:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .spk.playing{background:var(--accent);color:#fff}
+  .front .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .word{font-family:"Newsreader",serif;font-weight:500;font-size:clamp(30px,8.5vw,44px);letter-spacing:-.01em;line-height:1.08}
+  .ipa{font-family:"Newsreader",serif;font-style:italic;color:var(--muted);font-size:17px;margin-top:8px}
+  .pos{font-size:12px;color:var(--muted);margin-top:12px;letter-spacing:.02em}
+  .hint{text-align:center;font-size:12px;color:var(--muted);margin-top:auto}
+  .back .kr{font-size:22px;font-weight:800;letter-spacing:-.01em;margin-top:14px}
+  .back .divider{height:1px;background:var(--line);margin:14px 0}
+  .exline{display:flex;align-items:flex-start;gap:10px}
+  .ex{font-family:"Newsreader",serif;font-size:17px;line-height:1.5;color:var(--ink);flex:1}
+  .ex b{font-weight:600;background:linear-gradient(transparent 60%,var(--accent-soft) 60%);padding:0 1px}
+  .spk.sm{width:32px;height:32px;font-size:14px;flex:none}
+  .exkr{font-size:14px;color:var(--muted);line-height:1.55;margin-top:7px}
+  .tip{margin-top:13px;font-size:12.5px;line-height:1.5;background:var(--soft);border-radius:12px;padding:11px 13px;color:#4a5068}
+  .tip b{color:var(--accent);font-weight:700}
+  .controls{display:flex;gap:10px;margin-top:18px}
+  .btn{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px;font-size:14.5px;font-weight:700;cursor:pointer;transition:.15s;color:var(--ink);font-family:inherit}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .btn.know{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.again{color:var(--muted)}
+  .btn:disabled{opacity:.4;cursor:default;transform:none}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 22px;text-align:center}
+  .panel h2{font-size:20px;font-weight:800;letter-spacing:-.01em}
+  .score{font-family:"Newsreader",serif;font-size:52px;font-weight:600;color:var(--accent);margin:14px 0 4px}
+  .score small{font-size:22px;color:var(--muted)}
+  .panel p{font-size:13.5px;color:var(--muted);line-height:1.55}
+  .row{display:flex;gap:10px;margin-top:14px}
+  .quiz-q{font-family:"Newsreader",serif;font-size:28px;font-weight:500;margin:6px 0 4px}
+  .quiz-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+  .opts{display:flex;flex-direction:column;gap:9px;text-align:left}
+  .opt{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 15px;font-size:14px;font-weight:600;cursor:pointer;transition:.14s;font-family:inherit;color:var(--ink)}
+  .opt:hover{border-color:var(--accent)}
+  .opt.correct{background:#e7f6ef;border-color:var(--ok);color:#04663f}
+  .opt.wrong{background:#fdecec;border-color:#e11d48;color:#a01230}
+  .opt:disabled{cursor:default}
+  .qmeta{font-size:12px;color:var(--muted);margin-bottom:12px;font-variant-numeric:tabular-nums}
+  .done-flame{font-size:44px;display:inline-block}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:22px;line-height:1.5}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <div class="brand"><span class="kicker">Magic English · Daily</span><span class="name">데일리 수능 어휘</span></div>
+    <div class="streak" title="연속 학습일"><span class="flame" id="flame">🔥</span><div><b id="streakNum">0</b><span> 일 연속</span></div></div>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="daybadge"><span id="dateLabel"></span><span class="chip" id="setChip"></span></div>
+  <div class="meta"><span id="progressLabel">오늘의 세트</span><span id="knowLabel">알아요 0</span></div>
+  <div class="track"><div class="fill" id="fill"></div></div>
+  <div id="view"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+/* ---------------- data ---------------- */
+const DATA = {
+  basic: { label:"기초", sub:"고1~2 · 개념", accent:"#0d9488", soft:"#e5f5f2", words:[
+    {w:"acquire", ipa:"/əˈkwaɪər/", pos:"v. 얻다, 습득하다", kr:"얻다, 습득하다", ex:"She worked hard to <b>acquire</b> fluency in English.", exkr:"그녀는 영어 유창성을 얻기 위해 열심히 노력했다.", tip:"'get'보다 격식 있는 말. <b>acquire a skill/habit</b> 형태."},
+    {w:"benefit", ipa:"/ˈbenɪfɪt/", pos:"n. 이익 · v. 이롭게 하다", kr:"이익, 혜택 / 이롭게 하다", ex:"Regular exercise <b>benefits</b> both body and mind.", exkr:"규칙적인 운동은 몸과 마음 모두에 이롭다.", tip:"<b>benefit from</b> ~로부터 이익을 얻다."},
+    {w:"consider", ipa:"/kənˈsɪdər/", pos:"v. 고려하다, 여기다", kr:"고려하다, 여기다", ex:"We should <b>consider</b> all the options carefully.", exkr:"우리는 모든 선택지를 신중히 고려해야 한다.", tip:"<b>consider -ing</b> (to부정사 X)."},
+    {w:"require", ipa:"/rɪˈkwaɪər/", pos:"v. 필요로 하다, 요구하다", kr:"필요로 하다, 요구하다", ex:"This job <b>requires</b> patience.", exkr:"이 일은 인내심을 필요로 한다.", tip:"<b>require + 목적어 + to do</b> 구문 주의."},
+    {w:"avoid", ipa:"/əˈvɔɪd/", pos:"v. 피하다", kr:"피하다", ex:"Try to <b>avoid</b> making the same mistake.", exkr:"같은 실수를 하지 않도록 하라.", tip:"<b>avoid + -ing</b> — to부정사를 쓰면 틀려요."},
+    {w:"improve", ipa:"/ɪmˈpruːv/", pos:"v. 향상시키다, 나아지다", kr:"향상시키다, 나아지다", ex:"Reading daily will <b>improve</b> your writing.", exkr:"매일 읽으면 글쓰기가 향상된다.", tip:"명사형 <b>improvement</b>(개선)도 함께."},
+    {w:"despite", ipa:"/dɪˈspaɪt/", pos:"prep. ~에도 불구하고", kr:"~에도 불구하고", ex:"She smiled <b>despite</b> the bad news.", exkr:"그녀는 나쁜 소식에도 불구하고 미소 지었다.", tip:"<b>despite + 명사</b> / although + 절."},
+    {w:"suggest", ipa:"/səˈdʒest/", pos:"v. 제안하다, 시사하다", kr:"제안하다, 시사하다", ex:"I <b>suggest</b> taking a short break.", exkr:"잠깐 쉬는 것을 제안한다.", tip:"제안일 때 <b>suggest that S (should) V</b>."},
+    {w:"purpose", ipa:"/ˈpɜːrpəs/", pos:"n. 목적, 의도", kr:"목적, 의도", ex:"The <b>purpose</b> of the meeting is to solve the problem.", exkr:"회의의 목적은 문제를 해결하는 것이다.", tip:"<b>on purpose</b> = 고의로."},
+    {w:"reduce", ipa:"/rɪˈduːs/", pos:"v. 줄이다, 감소시키다", kr:"줄이다, 감소시키다", ex:"We must <b>reduce</b> our use of energy.", exkr:"우리는 에너지 사용을 줄여야 한다.", tip:"<b>reduce = cut down on</b>. 반의어 increase."},
+    {w:"familiar", ipa:"/fəˈmɪliər/", pos:"adj. 익숙한, 친숙한", kr:"익숙한, 친숙한", ex:"This melody sounds <b>familiar</b> to me.", exkr:"이 멜로디는 내게 익숙하게 들린다.", tip:"<b>be familiar with</b> vs <b>be familiar to</b>."},
+    {w:"environment", ipa:"/ɪnˈvaɪrənmənt/", pos:"n. 환경", kr:"환경", ex:"Plastic waste harms the <b>environment</b>.", exkr:"플라스틱 쓰레기는 환경을 해친다.", tip:"the environment(자연환경) / a ~ environment(특정 환경)."},
+    {w:"determine", ipa:"/dɪˈtɜːrmɪn/", pos:"v. 결정하다, 알아내다", kr:"결정하다, 알아내다", ex:"Your effort will <b>determine</b> the result.", exkr:"너의 노력이 결과를 결정할 것이다.", tip:"명사 determination(결단력)."}
+  ]},
+  csat: { label:"수능 실전", sub:"고3 · 심화", accent:"#4f46e5", soft:"#eef0fe", words:[
+    {w:"ambiguous", ipa:"/æmˈbɪɡjuəs/", pos:"adj. 애매모호한", kr:"애매모호한", ex:"The instructions were so <b>ambiguous</b> that no one understood them.", exkr:"지시가 너무 모호해서 아무도 이해하지 못했다.", tip:"반의어 clear/definite. 명사 ambiguity."},
+    {w:"coherent", ipa:"/koʊˈhɪrənt/", pos:"adj. 일관성 있는, 논리 정연한", kr:"일관성 있는, 논리 정연한", ex:"A good essay presents a <b>coherent</b> argument.", exkr:"좋은 에세이는 일관된 논증을 제시한다.", tip:"명사 <b>coherence</b> — 빈칸추론 단골."},
+    {w:"inevitable", ipa:"/ɪnˈevɪtəbl/", pos:"adj. 불가피한, 필연적인", kr:"불가피한, 필연적인", ex:"Change is <b>inevitable</b> in a fast-moving society.", exkr:"빠르게 변하는 사회에서 변화는 불가피하다.", tip:"부사 <b>inevitably</b>도 자주 출제."},
+    {w:"empirical", ipa:"/ɪmˈpɪrɪkl/", pos:"adj. 경험적인, 실증적인", kr:"경험적인, 실증적인", ex:"The theory lacks <b>empirical</b> evidence.", exkr:"그 이론은 실증적 증거가 부족하다.", tip:"과학 지문 단골. 반의어 theoretical."},
+    {w:"plausible", ipa:"/ˈplɔːzəbl/", pos:"adj. 그럴듯한, 타당해 보이는", kr:"그럴듯한, 타당해 보이는", ex:"Her explanation sounded <b>plausible</b> but was false.", exkr:"그녀의 설명은 그럴듯했지만 거짓이었다.", tip:"'그럴듯한'이지 반드시 '참'은 아님."},
+    {w:"contradict", ipa:"/ˌkɑːntrəˈdɪkt/", pos:"v. 모순되다, 반박하다", kr:"모순되다, 반박하다", ex:"The new data <b>contradict</b> the earlier findings.", exkr:"새 자료는 이전 결과와 모순된다.", tip:"명사 contradiction, 형용사 contradictory."},
+    {w:"comprehensive", ipa:"/ˌkɑːmprɪˈhensɪv/", pos:"adj. 포괄적인, 종합적인", kr:"포괄적인, 종합적인", ex:"The report gives a <b>comprehensive</b> overview.", exkr:"그 보고서는 포괄적 개관을 제공한다.", tip:"comprehend(이해하다)와 혼동 주의!"},
+    {w:"deteriorate", ipa:"/dɪˈtɪriəreɪt/", pos:"v. 악화되다", kr:"악화되다, 나빠지다", ex:"His health gradually <b>deteriorated</b>.", exkr:"그의 건강은 점차 악화되었다.", tip:"반의어 improve. 상태 악화."},
+    {w:"conform", ipa:"/kənˈfɔːrm/", pos:"v. (기준·규칙에) 따르다", kr:"따르다, 순응하다", ex:"People tend to <b>conform</b> to group norms.", exkr:"사람들은 집단 규범에 순응하는 경향이 있다.", tip:"<b>conform to</b> ~. 명사 conformity."},
+    {w:"paradox", ipa:"/ˈpærədɑːks/", pos:"n. 역설, 모순", kr:"역설, 모순", ex:"It is a <b>paradox</b> that the more we have, the less satisfied we feel.", exkr:"더 가질수록 덜 만족한다는 것은 역설이다.", tip:"형용사 paradoxical."},
+    {w:"arbitrary", ipa:"/ˈɑːrbɪtreri/", pos:"adj. 임의의, 자의적인", kr:"임의의, 자의적인", ex:"The decision seemed <b>arbitrary</b> and unfair.", exkr:"그 결정은 자의적이고 불공정해 보였다.", tip:"뚜렷한 근거 없이 마음대로 정함."},
+    {w:"underlying", ipa:"/ˌʌndərˈlaɪɪŋ/", pos:"adj. 근본적인, 기저의", kr:"근본적인, 기저의", ex:"We must address the <b>underlying</b> cause, not just the symptom.", exkr:"증상만이 아니라 근본 원인을 다뤄야 한다.", tip:"동사 underlie에서 파생."},
+    {w:"substantial", ipa:"/səbˈstænʃl/", pos:"adj. 상당한, 실질적인", kr:"상당한, 실질적인", ex:"There was a <b>substantial</b> increase in sales.", exkr:"매출이 상당히 증가했다.", tip:"substantially(부사) 상당히."}
+  ]},
+  writing: { label:"내신 서술형", sub:"영작 · 구문", accent:"#db2777", soft:"#fce7f1", words:[
+    {w:"contribute to", ipa:"/kənˈtrɪbjuːt/", pos:"~에 기여하다, 원인이 되다", kr:"~에 기여하다, 원인이 되다", ex:"Regular exercise <b>contributes to</b> good health.", exkr:"규칙적인 운동은 건강에 기여한다.", tip:"서술형 빈출! <b>contribute to + 명사/동명사</b>."},
+    {w:"be likely to", ipa:"/ˈlaɪkli/", pos:"~할 가능성이 높다", kr:"~할 가능성이 높다", ex:"Students who read a lot are <b>likely to</b> write well.", exkr:"많이 읽는 학생은 글을 잘 쓸 가능성이 높다.", tip:"be likely <b>to V</b>. be able to와 구별."},
+    {w:"play a role in", ipa:"/roʊl/", pos:"~에서 역할을 하다", kr:"~에서 역할을 하다", ex:"Technology <b>plays a</b> key <b>role in</b> modern education.", exkr:"기술은 현대 교육에서 핵심 역할을 한다.", tip:"play a <b>+형용사+</b> role in ~."},
+    {w:"lead to", ipa:"/liːd/", pos:"~로 이어지다, 초래하다", kr:"~로 이어지다, 초래하다", ex:"Stress can <b>lead to</b> serious health problems.", exkr:"스트레스는 심각한 건강 문제로 이어질 수 있다.", tip:"<b>lead to + 명사</b>(결과)."},
+    {w:"so ~ that …", ipa:"", pos:"너무 ~해서 …하다", kr:"너무 ~해서 …하다 (인과·정도)", ex:"The book was <b>so</b> interesting <b>that</b> I couldn't put it down.", exkr:"그 책은 너무 흥미로워서 내려놓을 수 없었다.", tip:"<b>so + 형/부 + that + S V</b>."},
+    {w:"not only A but also B", ipa:"", pos:"A뿐만 아니라 B도", kr:"A뿐만 아니라 B도", ex:"She is <b>not only</b> smart <b>but also</b> kind.", exkr:"그녀는 똑똑할 뿐만 아니라 친절하기도 하다.", tip:"A·B의 <b>병렬</b>(품사 일치)이 감점 포인트!"},
+    {w:"the 비교급 ~, the 비교급 …", ipa:"", pos:"~할수록 더 …하다", kr:"~할수록 더 …하다", ex:"<b>The more</b> you practice, <b>the more</b> confident you become.", exkr:"연습할수록 더 자신감이 생긴다.", tip:"「The 비교급 + S V, the 비교급 + S V」."},
+    {w:"it is important to", ipa:"", pos:"~하는 것이 중요하다", kr:"~하는 것이 중요하다", ex:"<b>It is important to</b> set clear goals.", exkr:"명확한 목표를 세우는 것이 중요하다.", tip:"가주어 It ~ 진주어 to부정사."},
+    {w:"enable ~ to", ipa:"/ɪˈneɪbl/", pos:"~가 …할 수 있게 하다", kr:"~가 …하도록 가능하게 하다", ex:"The app <b>enables</b> students <b>to</b> study anywhere.", exkr:"그 앱은 학생들이 어디서나 공부할 수 있게 한다.", tip:"<b>enable + 목적어 + to V</b>."},
+    {w:"as a result", ipa:"", pos:"그 결과, 결과적으로", kr:"그 결과, 결과적으로", ex:"He studied hard; <b>as a result</b>, he passed the exam.", exkr:"그는 열심히 공부했다; 그 결과 시험에 합격했다.", tip:"결과 연결어. 논리 전개에 유용."},
+    {w:"compared to", ipa:"/kəmˈperd/", pos:"~와 비교하여", kr:"~와 비교하여", ex:"<b>Compared to</b> last year, sales have doubled.", exkr:"작년과 비교하여 매출이 두 배가 되었다.", tip:"compared to/with + 명사. 문두 분사구문."},
+    {w:"despite the fact that", ipa:"", pos:"~라는 사실에도 불구하고", kr:"~라는 사실에도 불구하고", ex:"<b>Despite the fact that</b> it was raining, they kept playing.", exkr:"비가 오고 있었음에도 그들은 계속 놀았다.", tip:"despite 뒤에 절을 쓰고 싶을 때."}
+  ]}
+};
+const LEVELS = ["basic","csat","writing"];
+const SET_SIZE = 6;
+
+/* ---------------- storage (safe) ---------------- */
+const store=(()=>{let ok=true;try{localStorage.setItem("__t","1");localStorage.removeItem("__t");}catch(e){ok=false;}const mem={};
+  return{get:k=>{try{return ok?localStorage.getItem(k):(mem[k]??null);}catch(e){return mem[k]??null;}},
+         set:(k,v)=>{try{ok?localStorage.setItem(k,v):(mem[k]=v);}catch(e){mem[k]=v;}}};})();
+const dayNum=()=>{const d=new Date();return Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate())/86400000);};
+const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+const dateKR=()=>{const d=new Date();return`${d.getMonth()+1}월 ${d.getDate()}일 (${"일월화수목금토"[d.getDay()]})`;};
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/86400000);
+
+/* ---------------- TTS ---------------- */
+const canTTS=("speechSynthesis"in window);
+function speak(text,btn){
+  if(!canTTS||!text)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=.92;
+    if(btn){btn.classList.add("playing");u.onend=u.onerror=()=>btn.classList.remove("playing");}
+    speechSynthesis.speak(u);}catch(e){}
+}
+const strip=s=>s.replace(/<[^>]+>/g,"");
+
+/* ---------------- seeded daily set ---------------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function seededShuffle(arr,seed){arr=[...arr];const r=mulberry32(seed);for(let i=arr.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function dailyDeck(lv){const total=DATA[lv].words.length;const seed=dayNum()*100+LEVELS.indexOf(lv);return seededShuffle([...Array(total).keys()],seed).slice(0,Math.min(SET_SIZE,total));}
+
+/* ---------------- state ---------------- */
+let level="basic",mode="daily",deck=[],pos=0,known=new Set();
+
+/* ---------------- build tabs ---------------- */
+const tabsEl=document.getElementById("tabs");
+LEVELS.forEach(id=>{const d=DATA[id];const b=document.createElement("button");b.className="tab";b.setAttribute("role","tab");b.dataset.id=id;
+  b.innerHTML=`<div class="t">${d.label}</div><div class="s">${d.sub}</div>`;b.onclick=()=>selectLevel(id);tabsEl.appendChild(b);});
+document.getElementById("dateLabel").textContent=dateKR()+" 세트";
+renderStreak();selectLevel("basic");
+
+function setAccent(id){document.documentElement.style.setProperty("--accent",DATA[id].accent);document.documentElement.style.setProperty("--accent-soft",DATA[id].soft);}
+function selectLevel(id){level=id;mode="daily";deck=dailyDeck(id);pos=0;known=new Set();setAccent(id);
+  [...tabsEl.children].forEach(t=>{const on=t.dataset.id===id;t.setAttribute("aria-selected",on?"true":"false");t.style.background=on?DATA[id].accent:"var(--surface)";});
+  document.getElementById("setChip").textContent=`오늘의 ${deck.length}단어`;
+  render();}
+function startReview(){const wrong=loadWrong();if(!wrong.length)return;mode="review";deck=wrong;pos=0;known=new Set();document.getElementById("setChip").textContent=`오답 ${deck.length}단어`;render();}
+
+/* ---------------- wrong storage ---------------- */
+function wrongKey(){return`me_wrong_${level}_${todayStr()}`;}
+function loadWrong(){try{return JSON.parse(store.get(wrongKey())||"[]");}catch(e){return[];}}
+function saveWrong(arr){store.set(wrongKey(),JSON.stringify([...new Set(arr)]));}
+
+/* ---------------- render card ---------------- */
+function render(){
+  const words=DATA[level].words,tot=deck.length;
+  document.getElementById("progressLabel").textContent=(mode==="review"?"오답 복습 ":"오늘의 세트 ")+`${Math.min(pos+1,tot)} / ${tot}`;
+  document.getElementById("knowLabel").textContent=`알아요 ${known.size}`;
+  document.getElementById("fill").style.width=(pos/tot*100)+"%";
+  const view=document.getElementById("view");
+  const gi=deck[pos],wd=words[gi];
+  const showFrontSpk=canTTS&&/^[A-Za-z]/.test(wd.w);
+  view.innerHTML=`
+    <div class="stage"><div class="card" id="card">
+      <div class="face front">
+        <div class="rowtop"><span class="tag">${mode==="review"?"오답 복습":DATA[level].label}</span>
+          ${showFrontSpk?`<button class="spk" id="spkF" title="발음 듣기" aria-label="발음 듣기">🔊</button>`:`<span></span>`}</div>
+        <div class="center"><div class="word">${wd.w}</div>${wd.ipa?`<div class="ipa">${wd.ipa}</div>`:``}<div class="pos">${wd.pos}</div></div>
+        <div class="hint">카드를 눌러 뜻 보기 →</div>
+      </div>
+      <div class="face back">
+        <div class="rowtop"><span class="tag">뜻 & 예문</span></div>
+        <div class="kr">${wd.kr}</div><div class="divider"></div>
+        <div class="exline"><div class="ex">${wd.ex}</div>${canTTS?`<button class="spk sm" id="spkB" title="예문 듣기" aria-label="예문 듣기">🔊</button>`:``}</div>
+        <div class="exkr">${wd.exkr}</div>
+        <div class="tip">💡 ${wd.tip}</div>
+      </div>
+    </div></div>
+    <div class="controls">
+      <button class="btn again" id="again">다시 볼래요</button>
+      <button class="btn know" id="know">알아요 ✓</button>
+    </div>`;
+  const card=document.getElementById("card");
+  card.onclick=e=>{if(e.target.closest(".controls")||e.target.closest(".spk"))return;card.classList.toggle("flipped");};
+  const sf=document.getElementById("spkF");if(sf)sf.onclick=e=>{e.stopPropagation();speak(wd.w,sf);};
+  const sb=document.getElementById("spkB");if(sb)sb.onclick=e=>{e.stopPropagation();speak(strip(wd.ex),sb);};
+  document.getElementById("again").onclick=()=>next(false);
+  document.getElementById("know").onclick=()=>next(true);
+}
+function next(gotIt){const gi=deck[pos];if(gotIt)known.add(gi);else known.delete(gi);
+  if(pos<deck.length-1){pos++;render();}else finish();}
+
+/* ---------------- finish / result ---------------- */
+function finish(){
+  document.getElementById("fill").style.width="100%";
+  const tot=deck.length,wrong=deck.filter(gi=>!known.has(gi));
+  if(mode==="daily")saveWrong([...loadWrong().filter(gi=>!deck.includes(gi)),...wrong]);
+  const view=document.getElementById("view");
+  const savedWrong=loadWrong();
+  view.innerHTML=`<div class="panel">
+    <span class="done-flame">📚</span>
+    <h2>${mode==="review"?"오답 복습 끝!":"오늘 세트 학습 끝!"}</h2>
+    <div class="score">${known.size}<small> / ${tot}</small></div>
+    <p>${wrong.length?`아직 헷갈리는 단어 ${wrong.length}개는 아래에서 다시 볼 수 있어요.`:"모두 익혔어요! 미니 퀴즈로 확인해 보세요."}</p>
+    <div class="row">
+      <button class="btn" id="restart">다시 학습</button>
+      <button class="btn" id="reviewBtn" ${savedWrong.length?"":"disabled"}>오답 다시 보기 (${savedWrong.length})</button>
+    </div>
+    <div class="row"><button class="btn" id="quiz" style="flex:1">미니 퀴즈 →</button></div>
+    <div class="row"><button class="btn know" id="complete" style="flex:1">오늘 학습 완료 🔥</button></div>
+  </div>`;
+  view.querySelector("#restart").onclick=()=>selectLevel(level);
+  view.querySelector("#reviewBtn").onclick=startReview;
+  view.querySelector("#quiz").onclick=startQuiz;
+  view.querySelector("#complete").onclick=completeToday;
+}
+
+/* ---------------- mini quiz ---------------- */
+let quiz={list:[],pos:0,correct:0};
+function startQuiz(){const pool=(deck.length?deck:dailyDeck(level)).map(gi=>({...DATA[level].words[gi],gi}));
+  quiz.list=seededShuffle(pool,Date.now()&0xffff).slice(0,Math.min(5,pool.length));quiz.pos=0;quiz.correct=0;renderQuiz();}
+function renderQuiz(){
+  const view=document.getElementById("view");
+  if(quiz.pos>=quiz.list.length){
+    view.innerHTML=`<div class="panel"><span class="done-flame">🎯</span><h2>퀴즈 완료</h2>
+      <div class="score">${quiz.correct}<small> / ${quiz.list.length}</small></div>
+      <p>완료를 눌러 오늘의 연속 학습을 기록하세요.</p>
+      <div class="row"><button class="btn" id="q2">퀴즈 다시</button><button class="btn know" id="cmp">오늘 학습 완료 🔥</button></div></div>`;
+    view.querySelector("#q2").onclick=startQuiz;view.querySelector("#cmp").onclick=completeToday;return;}
+  const q=quiz.list[quiz.pos],pool=DATA[level].words.filter(w=>w.w!==q.w);
+  const opts=seededShuffle([q.kr,...seededShuffle(pool,quiz.pos+7).slice(0,3).map(w=>w.kr)],quiz.pos+1);
+  view.innerHTML=`<div class="panel"><div class="qmeta">문제 ${quiz.pos+1} / ${quiz.list.length}</div>
+    <div class="quiz-q">${q.w}</div><div class="quiz-sub">알맞은 뜻을 고르세요</div><div class="opts" id="opts"></div></div>`;
+  const box=view.querySelector("#opts");
+  opts.forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=o;
+    b.onclick=()=>{[...box.children].forEach(x=>x.disabled=true);
+      if(o===q.kr){b.classList.add("correct");quiz.correct++;}
+      else{b.classList.add("wrong");[...box.children].find(x=>x.textContent===q.kr).classList.add("correct");
+        const cur=loadWrong();cur.push(q.gi);saveWrong(cur);}
+      setTimeout(()=>{quiz.pos++;renderQuiz();},900);};
+    box.appendChild(b);});
+}
+
+/* ---------------- complete + streak ---------------- */
+function completeToday(){
+  const today=todayStr(),last=store.get("me_last");
+  let streak=parseInt(store.get("me_streak")||"0",10),best=parseInt(store.get("me_best")||"0",10);
+  if(last!==today){if(last&&daysBetween(last,today)===1)streak+=1;else streak=1;
+    store.set("me_last",today);store.set("me_streak",String(streak));if(streak>best){best=streak;store.set("me_best",String(streak));}}
+  renderStreak(true);
+  const view=document.getElementById("view");
+  view.innerHTML=`<div class="panel"><span class="done-flame flame" id="bigFlame">🔥</span>
+    <h2>${streak}일 연속 달성!</h2>
+    <p>${last===today?"오늘은 이미 완료했었어요 — 좋아요!":"내일도 이어가면 불꽃이 더 커집니다."}<br>최고 기록 ${best}일 · 다른 난이도도 도전해 보세요.</p>
+    <div class="row"><button class="btn" id="again2">이 난이도 복습</button><button class="btn know" id="switch">다음 난이도 →</button></div></div>`;
+  const bf=document.getElementById("bigFlame");bf.style.fontSize="54px";void bf.offsetWidth;bf.classList.add("fire");
+  view.querySelector("#again2").onclick=()=>selectLevel(level);
+  view.querySelector("#switch").onclick=()=>selectLevel(LEVELS[(LEVELS.indexOf(level)+1)%LEVELS.length]);
+}
+function renderStreak(animate){const s=parseInt(store.get("me_streak")||"0",10),last=store.get("me_last");
+  let shown=s;if(last&&daysBetween(last,todayStr())>1)shown=0;
+  document.getElementById("streakNum").textContent=shown;
+  if(animate){const f=document.getElementById("flame");f.classList.remove("fire");void f.offsetWidth;f.classList.add("fire");}}
+
+document.getElementById("foot").innerHTML="매일 새로운 세트가 자동으로 나와요 · 발음 🔊 · 오답은 다시 보기로 · 연속 학습 기록은 이 기기에 저장됩니다.";
+</script>
+</body>
+</html>
