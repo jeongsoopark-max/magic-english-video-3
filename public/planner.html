@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>주간 학습 플래너 · MAGIC ENGLISH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  :root{--bg:#f4f6fb;--surface:#fff;--ink:#1f2438;--muted:#6b7185;--line:#e6e9f2;--soft:#f4f5fa;
+    --accent:#0d9488;--accent-soft:#d9f2ee;--ok:#059669;
+    --shadow:0 16px 40px -24px rgba(31,36,56,.35);--radius:20px;
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{min-height:100vh;display:flex;justify-content:center;padding:22px 14px 44px;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:560px}
+  .bar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+  .kicker{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .name{font-size:22px;font-weight:800;letter-spacing:-.01em}
+  .week{font-size:12px;color:var(--muted);margin-top:3px}
+  .ring{position:relative;width:64px;height:64px;flex:none}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+  .summary{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+  .summary b{color:var(--accent);font-weight:800}
+  .days{display:flex;gap:6px;margin-bottom:16px}
+  .day{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 0;cursor:pointer;text-align:center;transition:.14s;font-family:inherit}
+  .day .d{font-size:13px;font-weight:800}
+  .day .c{font-size:10px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+  .day[aria-selected="true"]{background:var(--accent);border-color:transparent;box-shadow:var(--shadow)}
+  .day[aria-selected="true"] .d,.day[aria-selected="true"] .c{color:#fff}
+  .day.today .d:after{content:"·";color:var(--accent);font-weight:900}
+  .day[aria-selected="true"].today .d:after{color:#fff}
+  .addrow{display:flex;gap:8px;margin-bottom:14px}
+  .addrow input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--surface)}
+  .addrow input:focus{outline:none;border-color:var(--accent)}
+  .addrow button{flex:none;border:none;background:var(--accent);color:#fff;border-radius:12px;padding:0 18px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+  .cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .catbtn{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:.14s}
+  .catbtn[aria-pressed="true"]{color:#fff;border-color:transparent}
+  .list{display:flex;flex-direction:column;gap:8px;min-height:60px}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:26px 0}
+  .task{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:.14s}
+  .task .box{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid #c9cede;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;cursor:pointer;transition:.14s}
+  .task.done .box{background:var(--ok);border-color:var(--ok)}
+  .task .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .task .txt{flex:1;font-size:14px;line-height:1.35}
+  .task.done .txt{text-decoration:line-through;color:var(--muted)}
+  .task .del{flex:none;border:none;background:transparent;color:#c0c5d4;cursor:pointer;font-size:16px;padding:2px 4px}
+  .task .del:hover{color:var(--no,#e11d48)}
+  .footrow{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+  .reset{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  .reset:hover{border-color:#e11d48;color:#e11d48}
+  .hint{font-size:11px;color:var(--muted);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <div><div class="kicker">Magic English · Planner</div><div class="name">주간 학습 플래너</div><div class="week" id="week"></div></div>
+    <div class="ring"><svg width="64" height="64"><circle cx="32" cy="32" r="27" fill="none" stroke="var(--line)" stroke-width="7"/><circle id="prog" cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" stroke-dasharray="170" stroke-dashoffset="170"/></svg><div class="pct" id="pct">0%</div></div>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div class="days" id="days"></div>
+  <div class="cats" id="cats"></div>
+  <div class="addrow">
+    <input id="taskInput" placeholder="할 일 입력 (예: 수능 어휘 6단어)" onkeydown="if(event.key==='Enter')addTask()" />
+    <button onclick="addTask()">추가</button>
+  </div>
+  <div class="list" id="list"></div>
+  <div class="footrow">
+    <span class="hint">매주 새 플래너가 열려요 · 기록은 이 기기에 저장됩니다.</span>
+    <button class="reset" onclick="resetWeek()">이번 주 비우기</button>
+  </div>
+</div>
+<script>
+const DAYS=["월","화","수","목","금","토","일"];
+const CATS=[{k:"vocab",n:"어휘",c:"#0d9488"},{k:"grammar",n:"어법",c:"#7c3aed"},{k:"reading",n:"독해",c:"#4f46e5"},{k:"listen",n:"듣기",c:"#0369a1"},{k:"exam",n:"모의고사",c:"#db2777"},{k:"etc",n:"기타",c:"#6b7185"}];
+
+const store=(()=>{let ok=true;try{localStorage.setItem("__t","1");localStorage.removeItem("__t");}catch(e){ok=false;}const m={};
+  return{get:k=>{try{return ok?localStorage.getItem(k):(m[k]??null);}catch(e){return m[k]??null;}},
+         set:(k,v)=>{try{ok?localStorage.setItem(k,v):(m[k]=v);}catch(e){m[k]=v;}}};})();
+
+// ISO week key + Monday-Sunday date range
+function mondayOf(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x;}
+function isoWeekKey(d){const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()+3-((t.getDay()+6)%7));const wk1=new Date(t.getFullYear(),0,4);
+  const n=1+Math.round(((t-wk1)/86400000-3+((wk1.getDay()+6)%7))/7);return t.getFullYear()+"-W"+String(n).padStart(2,"0");}
+const now=new Date();
+const WEEKKEY="planner_"+isoWeekKey(now);
+const todayIdx=(now.getDay()+6)%7;
+
+let data=load(), sel=todayIdx, cat="vocab";
+function load(){try{const r=store.get(WEEKKEY);if(r)return JSON.parse(r);}catch(e){}return{mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};}
+const KEYS=["mon","tue","wed","thu","fri","sat","sun"];
+function save(){store.set(WEEKKEY,JSON.stringify(data));}
+
+// week label
+(function(){const m=mondayOf(now),s=new Date(m);const e=new Date(m);e.setDate(e.getDate()+6);
+  const f=x=>`${x.getMonth()+1}.${x.getDate()}`;document.getElementById("week").textContent=`${f(s)} ~ ${f(e)} · 이번 주`;})();
+
+// day tabs
+const daysEl=document.getElementById("days");
+DAYS.forEach((d,i)=>{const b=document.createElement("button");b.className="day"+(i===todayIdx?" today":"");b.dataset.i=i;
+  b.innerHTML=`<div class="d">${d}</div><div class="c" id="dc${i}"></div>`;b.onclick=()=>{sel=i;render();};daysEl.appendChild(b);});
+// category chips
+const catsEl=document.getElementById("cats");
+CATS.forEach(c=>{const b=document.createElement("button");b.className="catbtn";b.dataset.k=c.k;b.textContent=c.n;
+  b.onclick=()=>{cat=c.k;render();};catsEl.appendChild(b);});
+
+function addTask(){const inp=document.getElementById("taskInput");const t=inp.value.trim();if(!t)return;
+  data[KEYS[sel]].push({id:Date.now()+""+Math.random().toString(36).slice(2,6),text:t,cat:cat,done:false});
+  inp.value="";save();render();inp.focus();}
+function toggle(day,id){const it=data[KEYS[day]].find(x=>x.id===id);if(it){it.done=!it.done;save();render();}}
+function del(day,id){data[KEYS[day]]=data[KEYS[day]].filter(x=>x.id!==id);save();render();}
+function resetWeek(){if(confirm("이번 주 플래너의 모든 할 일을 지울까요?")){data={mon:[],tue:[],wed:[],thu:[],fri:[],sat:[],sun:[]};save();render();}}
+
+function catInfo(k){return CATS.find(c=>c.k===k)||CATS[5];}
+function render(){
+  // day tabs state + counts
+  [...daysEl.children].forEach((b,i)=>{b.setAttribute("aria-selected",i===sel?"true":"false");
+    const arr=data[KEYS[i]],done=arr.filter(x=>x.done).length;
+    document.getElementById("dc"+i).textContent=arr.length?`${done}/${arr.length}`:"·";});
+  // category chips state
+  [...catsEl.children].forEach(b=>{const on=b.dataset.k===cat,ci=catInfo(b.dataset.k);
+    b.setAttribute("aria-pressed",on?"true":"false");b.style.background=on?ci.c:"var(--surface)";b.style.color=on?"#fff":"var(--muted)";});
+  // task list for selected day
+  const arr=data[KEYS[sel]],list=document.getElementById("list");
+  list.innerHTML=arr.length?arr.map(it=>{const ci=catInfo(it.cat);
+    return `<div class="task ${it.done?"done":""}">
+      <div class="box" onclick="toggle(${sel},'${it.id}')">✓</div>
+      <span class="dot" style="background:${ci.c}"></span>
+      <span class="txt">${escapeHtml(it.text)}</span>
+      <button class="del" onclick="del(${sel},'${it.id}')" aria-label="삭제">×</button></div>`;}).join("")
+    :`<div class="empty">${DAYS[sel]}요일 할 일이 없어요.<br>위에서 카테고리를 고르고 할 일을 추가하세요.</div>`;
+  // weekly progress
+  let total=0,done=0;KEYS.forEach(k=>{total+=data[k].length;done+=data[k].filter(x=>x.done).length;});
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById("pct").textContent=pct+"%";
+  document.getElementById("prog").style.strokeDashoffset=170-(170*pct/100);
+  document.getElementById("summary").innerHTML=total?`이번 주 <b>${done}/${total}</b> 완료 · ${pct}% 달성 중`:"이번 주 할 일을 추가해 계획을 세워 보세요.";
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+render();
+</script>
+</body>
+</html>

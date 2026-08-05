@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>서술형 영작 첨삭 가이드 · MAGIC ENGLISH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  :root{--bg:#f4f6fb;--surface:#fff;--ink:#1f2438;--muted:#6b7185;--line:#e6e9f2;--soft:#f4f5fa;
+    --accent:#db2777;--accent-soft:#fce7f1;--no:#e11d48;--no-soft:#fdecec;--ok:#059669;--ok-soft:#e7f6ef;
+    --shadow:0 16px 40px -24px rgba(31,36,56,.35);--radius:20px;
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{min-height:100vh;display:flex;justify-content:center;padding:22px 14px 44px;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:620px}
+  .kicker{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .name{font-size:22px;font-weight:800;letter-spacing:-.01em}
+  .lead{font-size:13px;color:var(--muted);line-height:1.55;margin:6px 0 18px}
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 6px;cursor:pointer;font-weight:700;font-size:13px;transition:.15s;font-family:inherit;color:var(--ink)}
+  .tab[aria-selected="true"]{background:var(--accent);color:#fff;border-color:transparent;box-shadow:var(--shadow)}
+  .tab:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 20px}
+  /* error library */
+  .err{border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:11px}
+  .err .cat{font-size:12px;font-weight:800;color:var(--accent);background:var(--accent-soft);display:inline-block;padding:3px 10px;border-radius:99px;margin-bottom:10px}
+  .line{display:flex;gap:9px;align-items:flex-start;font-family:"Newsreader",serif;font-size:15.5px;line-height:1.5;margin-bottom:5px}
+  .mark{font-family:"Pretendard";font-weight:800;flex:none;width:18px}
+  .x .mark{color:var(--no)} .o .mark{color:var(--ok)}
+  .x .txt{color:#9b2c3c;text-decoration:line-through;text-decoration-color:#f4a6b3}
+  .o .txt{color:#04663f}
+  .why{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:7px;padding-top:8px;border-top:1px dashed var(--line)}
+  .why b{color:var(--accent)}
+  /* strategy */
+  ol.steps{list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;position:relative;padding:0 0 15px 40px;font-size:14px;line-height:1.6}
+  ol.steps li:before{content:counter(s);position:absolute;left:0;top:-2px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  ol.steps li:not(:last-child):after{content:"";position:absolute;left:13px;top:26px;bottom:2px;width:2px;background:var(--accent-soft)}
+  ol.steps b{font-weight:700;background:linear-gradient(transparent 60%,var(--accent-soft) 60%);padding:0 1px}
+  .note{background:var(--soft);border-radius:12px;padding:13px 15px;font-size:13px;color:#4a5068;line-height:1.6;margin-top:6px}
+  /* self-check */
+  .subtitle{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+  textarea{width:100%;min-height:92px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px;font-family:"Newsreader",serif;color:var(--ink);resize:vertical;background:var(--surface)}
+  textarea:focus{outline:none;border-color:var(--accent)}
+  .checks{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .chk{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:.14s;user-select:none}
+  .chk:hover{border-color:var(--accent)}
+  .chk.on{background:var(--accent-soft);border-color:var(--accent)}
+  .box{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid #c9cede;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;transition:.14s;margin-top:1px}
+  .chk.on .box{background:var(--accent);border-color:var(--accent)}
+  .chk .q{font-size:14px;font-weight:700;line-height:1.35}
+  .chk .r{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .progress{margin-top:16px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+  .pfill{height:100%;width:0;background:var(--accent);transition:width .3s}
+  .verdict{margin-top:14px;text-align:center;font-size:14px;font-weight:800;color:var(--ok);opacity:0;transition:.3s}
+  .verdict.show{opacity:1}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:22px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="kicker">Magic English · Writing</div>
+  <div class="name">서술형 영작 첨삭 가이드</div>
+  <p class="lead">내신 서술형에서 감점되는 부분을 스스로 잡아내는 훈련 도구입니다. 자주 틀리는 패턴을 익히고, 제출 전 체크리스트로 내 문장을 점검하세요.</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" data-v="0" role="tab">자주 틀리는 패턴</button>
+    <button class="tab" data-v="1" role="tab">조건 영작 전략</button>
+    <button class="tab" data-v="2" role="tab">내 문장 점검</button>
+  </div>
+  <div id="view"></div>
+  <div class="foot">감점은 대개 '뜻'이 아니라 '형태'에서 난다 — 수일치·시제·관사·병렬을 항상 마지막에 확인하세요.</div>
+</div>
+<script>
+const ERRORS=[
+ {cat:"수 일치",x:"The list of items <u>are</u> long.",o:"The list of items <u>is</u> long.",why:"진짜 주어는 <b>the list</b>(단수). of items는 수식어일 뿐. 수식어를 걷어내고 주어를 찾으세요."},
+ {cat:"시제",x:"Yesterday I <u>go</u> to the library.",o:"Yesterday I <u>went</u> to the library.",why:"<b>yesterday</b> 같은 과거 시점 표현과는 과거시제를 씁니다."},
+ {cat:"관사",x:"I have <u>dog</u> at home.",o:"I have <u>a dog</u> at home.",why:"셀 수 있는 단수 명사 앞에는 <b>a/an</b>이 필요합니다."},
+ {cat:"병렬 구조",x:"I like reading, writing, and <u>to speak</u>.",o:"I like reading, writing, and <u>speaking</u>.",why:"and로 연결된 항목은 <b>같은 품사·형태</b>(동명사)로 맞춰야 합니다."},
+ {cat:"관계사",x:"The man <u>which</u> helped me is kind.",o:"The man <u>who</u> helped me is kind.",why:"선행사가 사람이면 <b>who/that</b>, 사물이면 which."},
+ {cat:"전치사(타동사)",x:"We discussed <u>about</u> the plan.",o:"We <u>discussed</u> the plan.",why:"discuss는 타동사라 <b>about이 필요 없습니다</b>. (marry, enter, mention도 동일)"},
+ {cat:"간접의문문 어순",x:"I know what <u>is it</u>.",o:"I know what <u>it is</u>.",why:"간접의문문은 <b>의문사 + 주어 + 동사</b> 어순입니다."},
+ {cat:"준동사",x:"She enjoys <u>to read</u> novels.",o:"She enjoys <u>reading</u> novels.",why:"enjoy·avoid·mind·finish는 <b>동명사</b>를 목적어로 취합니다."},
+ {cat:"태(수동)",x:"The window <u>broke</u> by him.",o:"The window <u>was broken</u> by him.",why:"행위자(by him)가 있고 주어가 동작을 '당하므로' <b>수동태</b>."},
+ {cat:"가산/불가산",x:"I got <u>many informations</u>.",o:"I got <u>much information</u>.",why:"information은 <b>불가산명사</b> — 복수(s)·many 불가, much를 씁니다."},
+ {cat:"형용사/부사",x:"She sings <u>beautiful</u>.",o:"She sings <u>beautifully</u>.",why:"동사(sings)를 수식하므로 <b>부사</b>가 필요합니다."},
+ {cat:"시간·조건 부사절",x:"If it <u>will rain</u>, I'll stay.",o:"If it <u>rains</u>, I'll stay.",why:"시간·조건 부사절에서는 미래를 <b>현재시제</b>로 나타냅니다."}
+];
+const STEPS=[
+ "문제의 <b>조건</b>을 먼저 읽는다 — 어형 변화 여부, 단어 추가 가능 여부, 단어 수 제한 등.",
+ "주어진 단어로 <b>문장 뼈대(주어 + 동사)</b>를 먼저 세운다.",
+ "형용사·전치사구·관계절 등 <b>수식어</b>를 자리에 배치한다.",
+ "<b>수일치 · 시제 · 관사 · 병렬</b>을 점검한다.",
+ "철자 · 대소문자 · 구두점(마침표)까지 확인하고 마무리한다."
+];
+const CHECKS=[
+ {q:"주어와 동사의 수가 일치하는가?",r:"수식어(of ~, 관계절)를 걷어내고 진짜 주어를 확인."},
+ {q:"시제가 문맥·시간 표현과 맞는가?",r:"yesterday·now·조건절 등 단서와 대조."},
+ {q:"관사(a/an/the)를 빠뜨리지 않았는가?",r:"셀 수 있는 단수 명사 앞을 특히 확인."},
+ {q:"병렬 구조의 품사·형태가 같은가?",r:"and/or로 이어진 항목들을 나란히 비교."},
+ {q:"관계사·접속사가 올바른가?",r:"선행사(사람/사물)와 뒤 절의 완전·불완전 확인."},
+ {q:"전치사·준동사 형태가 맞는가?",r:"discuss/enjoy 등 동사별 어법, to부정사 vs 동명사."},
+ {q:"철자·대소문자·구두점을 확인했는가?",r:"문장 첫 글자 대문자, 문장 끝 마침표."}
+];
+
+const view=document.getElementById("view"),tabs=document.querySelectorAll(".tab");
+tabs.forEach(t=>t.onclick=()=>render(+t.dataset.v));
+function render(v){
+  tabs.forEach(t=>t.setAttribute("aria-selected",+t.dataset.v===v?"true":"false"));
+  if(v===0){
+    view.innerHTML=`<div class="card">${ERRORS.map(e=>`
+      <div class="err"><span class="cat">${e.cat}</span>
+        <div class="line x"><span class="mark">✗</span><span class="txt">${e.x}</span></div>
+        <div class="line o"><span class="mark">✓</span><span class="txt">${e.o}</span></div>
+        <div class="why">${e.why}</div></div>`).join("")}</div>`;
+  } else if(v===1){
+    view.innerHTML=`<div class="card">
+      <div class="subtitle">주어진 단어를 배열·변형하는 '조건 영작'을 푸는 5단계 절차입니다.</div>
+      <ol class="steps">${STEPS.map(s=>`<li>${s}</li>`).join("")}</ol>
+      <div class="note">💡 조건에 <b>"어형을 바꾸시오"</b>가 있으면 그 단어는 반드시 형태가 바뀝니다. 반대로 <b>"단어를 추가하지 마시오"</b>면 주어진 단어만으로 완성해야 하니, 관사·전치사가 이미 주어졌는지 세어 보세요.</div>
+    </div>`;
+  } else {
+    view.innerHTML=`<div class="card">
+      <div class="subtitle">내가 쓴 영어 문장을 적고, 아래 항목을 하나씩 확인하며 스스로 첨삭해 보세요.</div>
+      <textarea id="ta" placeholder="여기에 내 영작 문장을 입력하세요."></textarea>
+      <div class="checks" id="checks">${CHECKS.map((c,i)=>`
+        <div class="chk" data-i="${i}"><div class="box">✓</div><div><div class="q">${c.q}</div><div class="r">${c.r}</div></div></div>`).join("")}</div>
+      <div class="progress"><div class="pfill" id="pfill"></div></div>
+      <div class="verdict" id="verdict">🎉 자기 점검 완료! 이제 자신 있게 제출하세요.</div>
+    </div>`;
+    const chks=view.querySelectorAll(".chk");
+    chks.forEach(c=>c.onclick=()=>{c.classList.toggle("on");
+      const done=[...chks].filter(x=>x.classList.contains("on")).length;
+      document.getElementById("pfill").style.width=(done/chks.length*100)+"%";
+      document.getElementById("verdict").classList.toggle("show",done===chks.length);});
+  }
+}
+render(0);
+</script>
+</body>
+</html>
