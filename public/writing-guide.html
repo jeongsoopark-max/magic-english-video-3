@@ -87,7 +87,19 @@ const ERRORS=[
  {cat:"태(수동)",x:"The window <u>broke</u> by him.",o:"The window <u>was broken</u> by him.",why:"행위자(by him)가 있고 주어가 동작을 '당하므로' <b>수동태</b>."},
  {cat:"가산/불가산",x:"I got <u>many informations</u>.",o:"I got <u>much information</u>.",why:"information은 <b>불가산명사</b> — 복수(s)·many 불가, much를 씁니다."},
  {cat:"형용사/부사",x:"She sings <u>beautiful</u>.",o:"She sings <u>beautifully</u>.",why:"동사(sings)를 수식하므로 <b>부사</b>가 필요합니다."},
- {cat:"시간·조건 부사절",x:"If it <u>will rain</u>, I'll stay.",o:"If it <u>rains</u>, I'll stay.",why:"시간·조건 부사절에서는 미래를 <b>현재시제</b>로 나타냅니다."}
+ {cat:"시간·조건 부사절",x:"If it <u>will rain</u>, I'll stay.",o:"If it <u>rains</u>, I'll stay.",why:"시간·조건 부사절에서는 미래를 <b>현재시제</b>로 나타냅니다."},
+ {cat:"to부정사 목적어",x:"I want <u>going</u> home now.",o:"I want <u>to go</u> home now.",why:"want·hope·decide·plan은 <b>to부정사</b>를 목적어로 취합니다."},
+ {cat:"사역동사",x:"My mom made me <u>to clean</u> it.",o:"My mom made me <u>clean</u> it.",why:"make·have·let(사역동사)의 목적격보어는 <b>동사원형</b>."},
+ {cat:"지각동사",x:"I saw him <u>to enter</u> the room.",o:"I saw him <u>enter</u> the room.",why:"see·hear·watch(지각동사)는 <b>동사원형</b> 또는 -ing를 씁니다."},
+ {cat:"비교급 강조",x:"This is <u>very</u> better than that.",o:"This is <u>much</u> better than that.",why:"비교급은 very로 강조 불가. <b>much·far·even·a lot</b>을 씁니다."},
+ {cat:"최상급 the",x:"She is <u>tallest</u> in the class.",o:"She is <u>the tallest</u> in the class.",why:"최상급 앞에는 <b>the</b>를 붙입니다."},
+ {cat:"이중 부정",x:"I don't have <u>nothing</u> to do.",o:"I don't have <u>anything</u> to do.",why:"부정문에서는 nothing 대신 <b>anything</b>. 부정을 두 번 쓰지 않습니다."},
+ {cat:"지시형용사 수일치",x:"I read <u>this</u> books last week.",o:"I read <u>these</u> books last week.",why:"복수명사(books)에는 <b>these/those</b>를 씁니다."},
+ {cat:"there is / are",x:"<u>There is</u> many people here.",o:"<u>There are</u> many people here.",why:"뒤 명사(people)가 복수면 <b>There are</b>."},
+ {cat:"a / an 발음",x:"We waited for <u>a hour</u>.",o:"We waited for <u>an hour</u>.",why:"h가 묵음이라 모음 소리로 시작 → <b>an</b>. (철자 아닌 발음 기준)"},
+ {cat:"시간 전치사",x:"See you <u>in</u> Monday.",o:"See you <u>on</u> Monday.",why:"요일·날짜엔 <b>on</b>, 월·연도엔 in, 시각엔 at."},
+ {cat:"자동사 수동태",x:"The accident <u>was happened</u>.",o:"The accident <u>happened</u>.",why:"happen은 <b>자동사</b>라 수동태 불가. (appear·occur·rise 동일)"},
+ {cat:"so / such",x:"It was <u>so a</u> nice day.",o:"It was <u>such a</u> nice day.",why:"「such + a + 형용사 + 명사」 / 「so + 형용사」 어순 구별."}
 ];
 const STEPS=[
  "문제의 <b>조건</b>을 먼저 읽는다 — 어형 변화 여부, 단어 추가 가능 여부, 단어 수 제한 등.",
