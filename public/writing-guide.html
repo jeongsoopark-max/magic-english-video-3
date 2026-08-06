@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>서술형 영작 첨삭 가이드 · MAGIC ENGLISH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  :root{--bg:#f4f6fb;--surface:#fff;--ink:#1f2438;--muted:#6b7185;--line:#e6e9f2;--soft:#f4f5fa;
+    --accent:#db2777;--accent-soft:#fce7f1;--no:#e11d48;--no-soft:#fdecec;--ok:#059669;--ok-soft:#e7f6ef;
+    --shadow:0 16px 40px -24px rgba(31,36,56,.35);--radius:20px;
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{min-height:100vh;display:flex;justify-content:center;padding:22px 14px 44px;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:620px}
+  .kicker{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .name{font-size:22px;font-weight:800;letter-spacing:-.01em}
+  .lead{font-size:13px;color:var(--muted);line-height:1.55;margin:6px 0 18px}
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 6px;cursor:pointer;font-weight:700;font-size:13px;transition:.15s;font-family:inherit;color:var(--ink)}
+  .tab[aria-selected="true"]{background:var(--accent);color:#fff;border-color:transparent;box-shadow:var(--shadow)}
+  .tab:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 20px}
+  /* error library */
+  .err{border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:11px}
+  .err .cat{font-size:12px;font-weight:800;color:var(--accent);background:var(--accent-soft);display:inline-block;padding:3px 10px;border-radius:99px;margin-bottom:10px}
+  .line{display:flex;gap:9px;align-items:flex-start;font-family:"Newsreader",serif;font-size:15.5px;line-height:1.5;margin-bottom:5px}
+  .mark{font-family:"Pretendard";font-weight:800;flex:none;width:18px}
+  .x .mark{color:var(--no)} .o .mark{color:var(--ok)}
+  .x .txt{color:#9b2c3c;text-decoration:line-through;text-decoration-color:#f4a6b3}
+  .o .txt{color:#04663f}
+  .why{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:7px;padding-top:8px;border-top:1px dashed var(--line)}
+  .why b{color:var(--accent)}
+  /* strategy */
+  ol.steps{list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;position:relative;padding:0 0 15px 40px;font-size:14px;line-height:1.6}
+  ol.steps li:before{content:counter(s);position:absolute;left:0;top:-2px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  ol.steps li:not(:last-child):after{content:"";position:absolute;left:13px;top:26px;bottom:2px;width:2px;background:var(--accent-soft)}
+  ol.steps b{font-weight:700;background:linear-gradient(transparent 60%,var(--accent-soft) 60%);padding:0 1px}
+  .note{background:var(--soft);border-radius:12px;padding:13px 15px;font-size:13px;color:#4a5068;line-height:1.6;margin-top:6px}
+  /* self-check */
+  .subtitle{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+  textarea{width:100%;min-height:92px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px;font-family:"Newsreader",serif;color:var(--ink);resize:vertical;background:var(--surface)}
+  textarea:focus{outline:none;border-color:var(--accent)}
+  .checks{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .chk{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:.14s;user-select:none}
+  .chk:hover{border-color:var(--accent)}
+  .chk.on{background:var(--accent-soft);border-color:var(--accent)}
+  .box{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid #c9cede;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;transition:.14s;margin-top:1px}
+  .chk.on .box{background:var(--accent);border-color:var(--accent)}
+  .chk .q{font-size:14px;font-weight:700;line-height:1.35}
+  .chk .r{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .progress{margin-top:16px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+  .pfill{height:100%;width:0;background:var(--accent);transition:width .3s}
+  .verdict{margin-top:14px;text-align:center;font-size:14px;font-weight:800;color:var(--ok);opacity:0;transition:.3s}
+  .verdict.show{opacity:1}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:22px;line-height:1.5}
+  .tabs{flex-wrap:wrap}
+  .tab{flex:1 1 auto;min-width:116px}
+  .days2{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .dchip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:.14s}
+  .dchip.on{background:var(--accent);color:#fff;border-color:transparent}
+  .pat-tip{background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;color:#7a1748;margin-bottom:14px}
+  .pat-tip b{color:var(--accent)}
+  .witem{border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+  .wko{font-size:14px;font-weight:700;line-height:1.5}
+  .wbank{font-size:12.5px;color:var(--muted);margin-top:6px;font-style:italic}
+  .wreveal{margin-top:10px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:9px;padding:6px 14px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit}
+  .wreveal:hover{background:var(--accent-soft)}
+  .wans{display:none;margin-top:10px}
+  .wans.show{display:block}
+  .wa{font-family:"Newsreader",serif;font-size:15px;line-height:1.5;color:#04663f;background:var(--ok-soft);border-radius:8px;padding:8px 12px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="kicker">Magic English · Writing</div>
+  <div class="name">서술형 영작 첨삭 가이드</div>
+  <p class="lead">내신 서술형에서 감점되는 부분을 스스로 잡아내는 훈련 도구입니다. 자주 틀리는 패턴을 익히고, Day별 패턴 영작으로 훈련하고, 제출 전 체크리스트로 내 문장을 점검하세요.</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" data-v="0" role="tab">자주 틀리는 패턴</button>
+    <button class="tab" data-v="1" role="tab">조건 영작 전략</button>
+    <button class="tab" data-v="2" role="tab">내 문장 점검</button>
+    <button class="tab" data-v="3" role="tab">패턴 영작 (Day)</button>
+  </div>
+  <div id="view"></div>
+  <div class="foot">감점은 대개 '뜻'이 아니라 '형태'에서 난다 — 수일치·시제·관사·병렬을 항상 마지막에 확인하세요.</div>
+</div>
+<script>
+const ERRORS=[
+ {cat:"수 일치",x:"The list of items <u>are</u> long.",o:"The list of items <u>is</u> long.",why:"진짜 주어는 <b>the list</b>(단수). of items는 수식어일 뿐. 수식어를 걷어내고 주어를 찾으세요."},
+ {cat:"시제",x:"Yesterday I <u>go</u> to the library.",o:"Yesterday I <u>went</u> to the library.",why:"<b>yesterday</b> 같은 과거 시점 표현과는 과거시제를 씁니다."},
+ {cat:"관사",x:"I have <u>dog</u> at home.",o:"I have <u>a dog</u> at home.",why:"셀 수 있는 단수 명사 앞에는 <b>a/an</b>이 필요합니다."},
+ {cat:"병렬 구조",x:"I like reading, writing, and <u>to speak</u>.",o:"I like reading, writing, and <u>speaking</u>.",why:"and로 연결된 항목은 <b>같은 품사·형태</b>(동명사)로 맞춰야 합니다."},
+ {cat:"관계사",x:"The man <u>which</u> helped me is kind.",o:"The man <u>who</u> helped me is kind.",why:"선행사가 사람이면 <b>who/that</b>, 사물이면 which."},
+ {cat:"전치사(타동사)",x:"We discussed <u>about</u> the plan.",o:"We <u>discussed</u> the plan.",why:"discuss는 타동사라 <b>about이 필요 없습니다</b>. (marry, enter, mention도 동일)"},
+ {cat:"간접의문문 어순",x:"I know what <u>is it</u>.",o:"I know what <u>it is</u>.",why:"간접의문문은 <b>의문사 + 주어 + 동사</b> 어순입니다."},
+ {cat:"준동사",x:"She enjoys <u>to read</u> novels.",o:"She enjoys <u>reading</u> novels.",why:"enjoy·avoid·mind·finish는 <b>동명사</b>를 목적어로 취합니다."},
+ {cat:"태(수동)",x:"The window <u>broke</u> by him.",o:"The window <u>was broken</u> by him.",why:"행위자(by him)가 있고 주어가 동작을 '당하므로' <b>수동태</b>."},
+ {cat:"가산/불가산",x:"I got <u>many informations</u>.",o:"I got <u>much information</u>.",why:"information은 <b>불가산명사</b> — 복수(s)·many 불가, much를 씁니다."},
+ {cat:"형용사/부사",x:"She sings <u>beautiful</u>.",o:"She sings <u>beautifully</u>.",why:"동사(sings)를 수식하므로 <b>부사</b>가 필요합니다."},
+ {cat:"시간·조건 부사절",x:"If it <u>will rain</u>, I'll stay.",o:"If it <u>rains</u>, I'll stay.",why:"시간·조건 부사절에서는 미래를 <b>현재시제</b>로 나타냅니다."},
+ {cat:"to부정사 목적어",x:"I want <u>going</u> home now.",o:"I want <u>to go</u> home now.",why:"want·hope·decide·plan은 <b>to부정사</b>를 목적어로 취합니다."},
+ {cat:"사역동사",x:"My mom made me <u>to clean</u> it.",o:"My mom made me <u>clean</u> it.",why:"make·have·let(사역동사)의 목적격보어는 <b>동사원형</b>."},
+ {cat:"지각동사",x:"I saw him <u>to enter</u> the room.",o:"I saw him <u>enter</u> the room.",why:"see·hear·watch(지각동사)는 <b>동사원형</b> 또는 -ing를 씁니다."},
+ {cat:"비교급 강조",x:"This is <u>very</u> better than that.",o:"This is <u>much</u> better than that.",why:"비교급은 very로 강조 불가. <b>much·far·even·a lot</b>을 씁니다."},
+ {cat:"최상급 the",x:"She is <u>tallest</u> in the class.",o:"She is <u>the tallest</u> in the class.",why:"최상급 앞에는 <b>the</b>를 붙입니다."},
+ {cat:"이중 부정",x:"I don't have <u>nothing</u> to do.",o:"I don't have <u>anything</u> to do.",why:"부정문에서는 nothing 대신 <b>anything</b>. 부정을 두 번 쓰지 않습니다."},
+ {cat:"지시형용사 수일치",x:"I read <u>this</u> books last week.",o:"I read <u>these</u> books last week.",why:"복수명사(books)에는 <b>these/those</b>를 씁니다."},
+ {cat:"there is / are",x:"<u>There is</u> many people here.",o:"<u>There are</u> many people here.",why:"뒤 명사(people)가 복수면 <b>There are</b>."},
+ {cat:"a / an 발음",x:"We waited for <u>a hour</u>.",o:"We waited for <u>an hour</u>.",why:"h가 묵음이라 모음 소리로 시작 → <b>an</b>. (철자 아닌 발음 기준)"},
+ {cat:"시간 전치사",x:"See you <u>in</u> Monday.",o:"See you <u>on</u> Monday.",why:"요일·날짜엔 <b>on</b>, 월·연도엔 in, 시각엔 at."},
+ {cat:"자동사 수동태",x:"The accident <u>was happened</u>.",o:"The accident <u>happened</u>.",why:"happen은 <b>자동사</b>라 수동태 불가. (appear·occur·rise 동일)"},
+ {cat:"so / such",x:"It was <u>so a</u> nice day.",o:"It was <u>such a</u> nice day.",why:"「such + a + 형용사 + 명사」 / 「so + 형용사」 어순 구별."}
+];
+const STEPS=[
+ "문제의 <b>조건</b>을 먼저 읽는다 — 어형 변화 여부, 단어 추가 가능 여부, 단어 수 제한 등.",
+ "주어진 단어로 <b>문장 뼈대(주어 + 동사)</b>를 먼저 세운다.",
+ "형용사·전치사구·관계절 등 <b>수식어</b>를 자리에 배치한다.",
+ "<b>수일치 · 시제 · 관사 · 병렬</b>을 점검한다.",
+ "철자 · 대소문자 · 구두점(마침표)까지 확인하고 마무리한다."
+];
+const CHECKS=[
+ {q:"주어와 동사의 수가 일치하는가?",r:"수식어(of ~, 관계절)를 걷어내고 진짜 주어를 확인."},
+ {q:"시제가 문맥·시간 표현과 맞는가?",r:"yesterday·now·조건절 등 단서와 대조."},
+ {q:"관사(a/an/the)를 빠뜨리지 않았는가?",r:"셀 수 있는 단수 명사 앞을 특히 확인."},
+ {q:"병렬 구조의 품사·형태가 같은가?",r:"and/or로 이어진 항목들을 나란히 비교."},
+ {q:"관계사·접속사가 올바른가?",r:"선행사(사람/사물)와 뒤 절의 완전·불완전 확인."},
+ {q:"전치사·준동사 형태가 맞는가?",r:"discuss/enjoy 등 동사별 어법, to부정사 vs 동명사."},
+ {q:"철자·대소문자·구두점을 확인했는가?",r:"문장 첫 글자 대문자, 문장 끝 마침표."}
+];
+
+const view=document.getElementById("view"),tabs=document.querySelectorAll(".tab");
+tabs.forEach(t=>t.onclick=()=>render(+t.dataset.v));
+function render(v){
+  tabs.forEach(t=>t.setAttribute("aria-selected",+t.dataset.v===v?"true":"false"));
+  if(v===0){
+    view.innerHTML=`<div class="card">${ERRORS.map(e=>`
+      <div class="err"><span class="cat">${e.cat}</span>
+        <div class="line x"><span class="mark">✗</span><span class="txt">${e.x}</span></div>
+        <div class="line o"><span class="mark">✓</span><span class="txt">${e.o}</span></div>
+        <div class="why">${e.why}</div></div>`).join("")}</div>`;
+  } else if(v===1){
+    view.innerHTML=`<div class="card">
+      <div class="subtitle">주어진 단어를 배열·변형하는 '조건 영작'을 푸는 5단계 절차입니다.</div>
+      <ol class="steps">${STEPS.map(s=>`<li>${s}</li>`).join("")}</ol>
+      <div class="note">💡 조건에 <b>"어형을 바꾸시오"</b>가 있으면 그 단어는 반드시 형태가 바뀝니다. 반대로 <b>"단어를 추가하지 마시오"</b>면 주어진 단어만으로 완성해야 하니, 관사·전치사가 이미 주어졌는지 세어 보세요.</div>
+    </div>`;
+  } else if(v===2){
+    view.innerHTML=`<div class="card">
+      <div class="subtitle">내가 쓴 영어 문장을 적고, 아래 항목을 하나씩 확인하며 스스로 첨삭해 보세요.</div>
+      <textarea id="ta" placeholder="여기에 내 영작 문장을 입력하세요."></textarea>
+      <div class="checks" id="checks">${CHECKS.map((c,i)=>`
+        <div class="chk" data-i="${i}"><div class="box">✓</div><div><div class="q">${c.q}</div><div class="r">${c.r}</div></div></div>`).join("")}</div>
+      <div class="progress"><div class="pfill" id="pfill"></div></div>
+      <div class="verdict" id="verdict">🎉 자기 점검 완료! 이제 자신 있게 제출하세요.</div>
+    </div>`;
+    const chks=view.querySelectorAll(".chk");
+    chks.forEach(c=>c.onclick=()=>{c.classList.toggle("on");
+      const done=[...chks].filter(x=>x.classList.contains("on")).length;
+      document.getElementById("pfill").style.width=(done/chks.length*100)+"%";
+      document.getElementById("verdict").classList.toggle("show",done===chks.length);});
+  } else { renderPatterns(); }
+}
+/* ===== Day별 패턴 영작 (Basic Writing 워크북 패턴을 새 예문으로 변형) ===== */
+const PATTERNS=[
+ {day:1,title:"as ~ as + 대동사",tip:"비교 대상에서 반복되는 동사(구)는 <b>대동사 do/does/did</b>로 대신한다. 시제·인칭에 맞춰 형태를 고르세요.",items:[
+   {ko:"나는 내 형이 운동하는 것만큼 자주 운동한다.",en:["I exercise as often as my brother does."]},
+   {ko:"그녀는 내가 노래했던 것만큼 아름답게 노래했다.",bank:"(she, I, sing, do, as beautifully as)",en:["She sang as beautifully as I did."]},
+   {ko:"우리 팀은 상대 팀이 연습하는 것만큼 열심히 연습한다.",en:["Our team practices as hard as the other team does."]}]},
+ {day:2,title:"비교 대상 일치 (that of / those of)",tip:"비교 대상이 '<b>~의 명사</b>'일 때, 반복 명사를 <b>that</b>(단수)·<b>those</b>(복수)로 받아 대상을 일치시킨다.",items:[
+   {ko:"서울의 인구는 부산의 인구보다 더 많다.",en:["The population of Seoul is larger than that of Busan."]},
+   {ko:"이 나라의 법은 이웃 나라의 법보다 더 엄격하다.",bank:"(the laws, this country, its neighbor, those, be, strict, of, of, than)",en:["The laws of this country are stricter than those of its neighbor."]},
+   {ko:"일본의 겨울은 태국의 겨울보다 더 춥다.",en:["The winter of Japan is colder than that of Thailand."]}]},
+ {day:3,title:"The 비교급 ~, the 비교급 ~",tip:"「<b>The + 비교급(+주어+동사), the + 비교급(+주어+동사)</b>」 — 비교급 어구를 각 절의 앞으로 보낸다.",items:[
+   {ko:"더 일찍 시작할수록, 더 많은 것을 끝낼 수 있다.",en:["The earlier you start, the more you can finish."]},
+   {ko:"더 많이 연습할수록, 더 자신감이 생긴다.",bank:"(you, you, practice, become, the more, the more confident)",en:["The more you practice, the more confident you become."]},
+   {ko:"날씨가 더 더울수록, 우리는 물을 더 많이 마신다.",en:["The hotter the weather is, the more water we drink."]}]},
+ {day:4,title:"완료 분사구문 (Having p.p.)",tip:"주절보다 <b>먼저 일어난 일</b>은 「<b>Having + p.p.</b>」 분사구문으로 나타낸다.",items:[
+   {ko:"시험을 끝낸 후, 우리는 축하하러 나갔다.",en:["Having finished the exam, we went out to celebrate."]},
+   {ko:"짐을 다 싼 후, 그녀는 공항으로 떠났다.",bank:"(she, her bags, pack, leave, for the airport)",en:["Having packed her bags, she left for the airport."]},
+   {ko:"그 소식을 들은 후, 그는 즉시 집에 전화했다.",en:["Having heard the news, he called home at once."]}]},
+ {day:5,title:"It is + 성질 형용사 + of + 목적격 + to V",tip:"<b>사람의 성질</b>을 나타내는 형용사(kind, rude, honest, foolish…)에는 「<b>of + 사람</b>」을 쓴다. (for ✗)",items:[
+   {ko:"그가 나를 도와준 건 친절한 것이었다.",en:["It was kind of him to help me."]},
+   {ko:"그렇게 말하다니 그녀는 무례했다.",bank:"(it, she, rude, be, say, of, to, that)",en:["It was rude of her to say that."]},
+   {ko:"진실을 인정하다니 너는 정직하구나.",en:["It is honest of you to admit the truth."]}]},
+ {day:6,title:"how + 형/부 어순 (간접의문문)",tip:"간접의문문·감탄에서는 「<b>how + 형용사/부사 + 주어 + 동사</b>」 어순.",items:[
+   {ko:"나는 그 산이 얼마나 높은지에 놀랐다.",en:["I was surprised by how high the mountain was."]},
+   {ko:"우리는 그가 얼마나 빨리 배우는지에 감명받았다.",bank:"(we, he, quickly, how, learn, impress, be, by)",en:["We were impressed by how quickly he learns."]},
+   {ko:"그녀는 그 시험이 얼마나 어려울지 우리에게 말해주었다.",en:["She told us how difficult the exam would be."]}]},
+ {day:7,title:"as many/much + 명사 + as",tip:"「<b>as + many(가산)/much(불가산) + 명사 + as</b>」 — 형용사가 명사를 감싼다. (books as many ✗)",items:[
+   {ko:"나는 그가 가진 것만큼 많은 책을 가지고 있다.",en:["I have as many books as he does."]},
+   {ko:"그녀는 나만큼 많은 시간을 그 일에 쏟았다.",bank:"(she, much time, the work, I, do, on, spend, as, as)",en:["She spent as much time on the work as I did."]},
+   {ko:"우리는 가능한 한 많은 자료를 모아야 한다.",en:["We should gather as much data as possible."]}]},
+ {day:8,title:"Not only ~ but also (도치)",tip:"<b>Not only</b>가 문두에 오면 뒤 절이 <b>도치</b>된다: 「Not only + (do/does/did/be) + 주어 ~, but ... also ...」",items:[
+   {ko:"그는 노래를 잘할 뿐만 아니라, 춤도 잘 춘다.",en:["Not only does he sing well, but he also dances well."]},
+   {ko:"그 호텔은 깨끗할 뿐만 아니라, 저렴하기도 했다.",bank:"(the hotel, it, clean, cheap, be, be, not only, but, also)",en:["Not only was the hotel clean, but it was also cheap."]},
+   {ko:"우리는 파리를 방문했을 뿐만 아니라, 로마도 봤다.",en:["Not only did we visit Paris, but we also saw Rome."]}]},
+ {day:9,title:"관계사 ↔ 분사",tip:"「(대)명사 + <b>who/that + 동사</b>」는 <b>현재분사(-ing)</b>로 줄일 수 있다. (두 형태 모두 정답)",items:[
+   {ko:"무대에서 노래하는 그 소녀는 내 여동생이다.",en:["The girl who sings on the stage is my sister.","The girl singing on the stage is my sister."]},
+   {ko:"해변으로 이어지는 그 길은 아름답다.",bank:"(the path, the beach, lead / leading, to, be, beautiful)",en:["The path that leads to the beach is beautiful.","The path leading to the beach is beautiful."]},
+   {ko:"그 회의에 참석하는 사람들은 명찰을 받는다.",en:["The people who attend the meeting receive name tags.","The people attending the meeting receive name tags."]}]},
+ {day:10,title:"5형식 (that절 ↔ 목적격보어)",tip:"「find/think + <b>that + 주어 + be + 형용사</b>」는 「find/think + <b>목적어 + 형용사</b>」로 줄일 수 있다.",items:[
+   {ko:"나는 그 영화가 지루하다는 것을 알았다.",en:["I found that the movie was boring.","I found the movie boring."]},
+   {ko:"우리는 그 규칙이 불공평하다고 생각했다.",bank:"(we, the rule, unfair, think, be, that)",en:["We thought that the rule was unfair.","We thought the rule unfair."]},
+   {ko:"그녀는 그 소식이 충격적이라는 것을 알았다.",en:["She found that the news was shocking.","She found the news shocking."]}]}
+];
+let patDay=1;
+function renderPatterns(){
+  const chips=PATTERNS.map(p=>`<button class="dchip ${p.day===patDay?'on':''}" data-d="${p.day}">Day ${p.day}</button>`).join("");
+  const p=PATTERNS.find(x=>x.day===patDay)||PATTERNS[0];
+  const items=p.items.map((it,idx)=>`
+    <div class="witem">
+      <div class="wko">${idx+1}. ${it.ko}</div>
+      ${it.bank?`<div class="wbank">${it.bank}</div>`:''}
+      <button class="wreveal" data-i="${idx}">정답 확인</button>
+      <div class="wans" id="wans-${idx}">${it.en.map(a=>`<div class="wa">✓ ${a}</div>`).join("")}</div>
+    </div>`).join("");
+  view.innerHTML=`<div class="card">
+    <div class="subtitle">우리말을 보고 영작한 뒤 <b>정답 확인</b>을 눌러 대조하세요. 괄호가 있으면 그 단어를 배열·변형합니다.</div>
+    <div class="days2">${chips}</div>
+    <div class="pat-tip"><b>Day ${p.day} · ${p.title}</b><br>${p.tip}</div>
+    ${items}
+  </div>`;
+  view.querySelectorAll(".dchip").forEach(c=>c.onclick=()=>{patDay=+c.dataset.d;renderPatterns();});
+  view.querySelectorAll(".wreveal").forEach(b=>b.onclick=()=>{
+    const a=document.getElementById("wans-"+b.dataset.i); if(a){a.classList.add("show");} b.style.display="none";});
+}
+render(0);
+</script>
+</body>
+</html>
