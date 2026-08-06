@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>어법 O/X 퀴즈 · MAGIC ENGLISH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  :root{--bg:#f4f6fb;--surface:#fff;--ink:#1f2438;--muted:#6b7185;--line:#e6e9f2;--soft:#f4f5fa;
+    --accent:#7c3aed;--accent-soft:#f0e9fe;--ok:#059669;--ok-soft:#e7f6ef;--no:#e11d48;--no-soft:#fdecec;
+    --shadow:0 16px 40px -24px rgba(31,36,56,.35);--radius:20px;
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{min-height:100vh;display:flex;justify-content:center;padding:22px 14px 40px;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:560px}
+  .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .brand{display:flex;flex-direction:column;line-height:1.15}
+  .brand .kicker{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .brand .name{font-size:18px;font-weight:800;letter-spacing:-.01em}
+  .prog{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+  .track{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:20px}
+  .fill{height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .3s ease}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 24px}
+  .topic{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 11px;border-radius:99px;display:inline-block}
+  .ask{font-size:12.5px;color:var(--muted);margin:16px 0 6px}
+  .sentence{font-family:"Newsreader",serif;font-size:clamp(20px,5vw,25px);line-height:1.55;color:var(--ink)}
+  .sentence u{text-decoration:none;font-weight:600;background:linear-gradient(transparent 58%,var(--accent-soft) 58%);padding:0 2px;border-bottom:2px solid var(--accent)}
+  .ox{display:flex;gap:12px;margin-top:22px}
+  .oxbtn{flex:1;border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:20px 0;cursor:pointer;transition:.15s;font-family:inherit}
+  .oxbtn .big{font-size:30px;font-weight:800;line-height:1}
+  .oxbtn .lab{font-size:12px;color:var(--muted);margin-top:6px;font-weight:600}
+  .oxbtn:hover{transform:translateY(-2px)}
+  .oxbtn:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .oxbtn.o .big{color:var(--ok)} .oxbtn.x .big{color:var(--no)}
+  .oxbtn:disabled{cursor:default;opacity:.5}
+  .oxbtn.picked-o{background:var(--ok-soft);border-color:var(--ok);opacity:1}
+  .oxbtn.picked-x{background:var(--no-soft);border-color:var(--no);opacity:1}
+  .verdict{margin-top:20px;border-radius:14px;padding:16px 16px;font-size:13.5px;line-height:1.6;display:none}
+  .verdict.show{display:block}
+  .verdict.right{background:var(--ok-soft);border:1px solid #b7e4cd}
+  .verdict.wrong{background:var(--no-soft);border:1px solid #f4c2cd}
+  .verdict .head{font-weight:800;font-size:14px;margin-bottom:6px}
+  .verdict.right .head{color:#04663f} .verdict.wrong .head{color:#a01230}
+  .verdict .fix{margin-top:8px;font-size:13px;background:#fff;border-radius:10px;padding:9px 11px;border:1px dashed var(--line)}
+  .verdict .fix b{color:var(--accent)}
+  .next{width:100%;margin-top:16px;border:none;background:var(--accent);color:#fff;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:none}
+  .next.show{display:block}
+  .next:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 22px;text-align:center}
+  .panel h2{font-size:21px;font-weight:800}
+  .score{font-family:"Newsreader",serif;font-size:56px;font-weight:600;color:var(--accent);margin:14px 0 2px}
+  .score small{font-size:24px;color:var(--muted)}
+  .panel p{font-size:13.5px;color:var(--muted);line-height:1.55}
+  .grade{font-size:15px;font-weight:800;margin-top:8px}
+  .row{display:flex;gap:10px;margin-top:20px}
+  .btn{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);transition:.15s}
+  .btn:hover{transform:translateY(-1px)} .btn.solid{background:var(--accent);color:#fff;border-color:transparent}
+  .btn:disabled{opacity:.4;cursor:default;transform:none}
+  .rev{text-align:left;margin-top:8px}
+  .rev .item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13px;line-height:1.5}
+  .rev .item .s{font-family:"Newsreader",serif;font-size:15px;margin-bottom:4px}
+  .rev .item .s u{text-decoration:none;border-bottom:2px solid var(--no);font-weight:600}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:22px;line-height:1.5}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <div class="brand"><span class="kicker">Magic English · Grammar</span><span class="name">어법 O/X 퀴즈</span></div>
+    <div class="prog" id="prog">1 / 10</div>
+  </div>
+  <div class="track"><div class="fill" id="fill"></div></div>
+  <div id="view"></div>
+  <div class="foot">밑줄 친 부분이 어법상 맞으면 <b>O</b>, 틀리면 <b>X</b> · 매 라운드 문제가 섞여 나옵니다.</div>
+</div>
+<script>
+/* correct:true = 밑줄 부분이 어법상 옳음(O). false = 틀림(X). */
+const BANK=[
+  // 정형동사
+  {topic:"정형동사", s:"The committee members <u>discussed</u> the proposal for several hours.", correct:true,
+   why:"discussed가 주어에 대한 정동사로 알맞다.", fix:""},
+  {topic:"정형동사", s:"The tourists <u>visiting</u> the ancient ruins every summer.", correct:false,
+   why:"문장에 정동사가 없다. visiting → visit.", fix:"visiting → <b>visit</b>"},
+  {topic:"정형동사", s:"The report <u>submitted</u> yesterday contained several errors.", correct:true,
+   why:"submitted는 report를 수식하는 분사이고, 본동사는 contained이다.", fix:""},
+  // 수 일치
+  {topic:"수 일치", s:"The number of students in the class <u>have</u> increased significantly.", correct:false,
+   why:"'The number of ~'는 단수 취급. have → has.", fix:"have → <b>has</b>"},
+  {topic:"수 일치", s:"Each of the applicants <u>was</u> required to submit a portfolio.", correct:true,
+   why:"Each는 단수 취급이므로 was가 알맞다.", fix:""},
+  {topic:"수 일치", s:"The quality of the products <u>determine</u> the reputation of the company.", correct:false,
+   why:"주어는 단수 quality. determine → determines.", fix:"determine → <b>determines</b>"},
+  // 능동 vs 수동
+  {topic:"능동 vs 수동", s:"The novel <u>was translated</u> into more than thirty languages.", correct:true,
+   why:"소설은 '번역되는' 대상이므로 수동태가 알맞다.", fix:""},
+  {topic:"능동 vs 수동", s:"A lot of changes <u>have made</u> to the original plan.", correct:false,
+   why:"변화는 '가해지는' 대상. have made → have been made.", fix:"have made → <b>have been made</b>"},
+  {topic:"능동 vs 수동", s:"The children <u>were praised</u> for their excellent behavior.", correct:true,
+   why:"아이들은 '칭찬받는' 대상이므로 수동태가 알맞다.", fix:""},
+  // 시제
+  {topic:"시제", s:"She <u>has finished</u> her homework before the guests arrived.", correct:false,
+   why:"과거(arrived)보다 앞선 일이므로 대과거. has finished → had finished.", fix:"has finished → <b>had finished</b>"},
+  {topic:"시제", s:"By the time we arrived, the movie <u>had already started</u>.", correct:true,
+   why:"과거 시점(arrived) 이전 완료이므로 과거완료가 알맞다.", fix:""},
+  {topic:"시제", s:"I will call you when the meeting <u>will end</u>.", correct:false,
+   why:"시간 부사절에서는 현재가 미래를 대신한다. will end → ends.", fix:"will end → <b>ends</b>"},
+  // 대동사
+  {topic:"대동사", s:"He speaks English better than his sister <u>is</u>.", correct:false,
+   why:"일반동사 speaks를 대신하는 대동사. is → does.", fix:"is → <b>does</b>"},
+  {topic:"대동사", s:"I don't like coffee, but my roommate <u>does</u>.", correct:true,
+   why:"like를 대신하는 대동사 does가 알맞다.", fix:""},
+  {topic:"대동사", s:"They have finished the project, and so <u>do</u> we.", correct:false,
+   why:"have를 받아야 한다. so do we → so have we.", fix:"do → <b>have</b>"},
+  // 분사
+  {topic:"분사", s:"The audience was <u>fascinated</u> by the magician's performance.", correct:true,
+   why:"청중이 '매료되는' 대상이므로 과거분사가 알맞다.", fix:""},
+  {topic:"분사", s:"The results of the survey were quite <u>surprised</u>.", correct:false,
+   why:"결과가 놀라움을 '유발'하므로 surprised → surprising.", fix:"surprised → <b>surprising</b>"},
+  {topic:"분사", s:"The <u>rising</u> cost of living worries many families.", correct:true,
+   why:"비용이 '오르는' 능동·진행 의미이므로 현재분사가 알맞다.", fix:""},
+  // 분사구문
+  {topic:"분사구문", s:"<u>Walking</u> along the beach, she found a beautiful shell.", correct:true,
+   why:"주어 she가 걷는 능동 관계이므로 현재분사가 알맞다.", fix:""},
+  {topic:"분사구문", s:"<u>Finished</u> the exam, the students left the classroom.", correct:false,
+   why:"학생이 능동으로 끝낸 것. Finished → Having finished.", fix:"Finished → <b>Having finished</b>"},
+  {topic:"분사구문", s:"<u>Frightened</u> by the noise, the cat hid under the bed.", correct:true,
+   why:"고양이가 '겁먹게 된' 수동이므로 과거분사가 알맞다.", fix:""},
+  // 부정사 vs 동명사
+  {topic:"부정사 vs 동명사", s:"I look forward to <u>meet</u> you next week.", correct:false,
+   why:"'look forward to'의 to는 전치사. meet → meeting.", fix:"meet → <b>meeting</b>"},
+  {topic:"부정사 vs 동명사", s:"She decided <u>to postpone</u> the meeting until Friday.", correct:true,
+   why:"decide는 to부정사를 목적어로 취한다.", fix:""},
+  {topic:"부정사 vs 동명사", s:"He avoided <u>to answer</u> the difficult question.", correct:false,
+   why:"avoid는 동명사를 목적어로 취한다. to answer → answering.", fix:"to answer → <b>answering</b>"},
+  // 관계사
+  {topic:"관계사", s:"The house <u>which</u> roof was damaged needs repair.", correct:false,
+   why:"소유 관계이므로 소유격 관계대명사. which → whose.", fix:"which → <b>whose</b>"},
+  {topic:"관계사", s:"This is the town <u>where</u> I grew up.", correct:true,
+   why:"장소를 나타내는 관계부사 where가 알맞다.", fix:""},
+  {topic:"관계사", s:"I met a woman <u>which</u> speaks five languages.", correct:false,
+   why:"선행사가 사람이므로 which → who.", fix:"which → <b>who</b>"},
+  // 형용사 vs 부사
+  {topic:"형용사 vs 부사", s:"The team worked <u>efficient</u> to meet the deadline.", correct:false,
+   why:"동사 worked를 수식하므로 부사. efficient → efficiently.", fix:"efficient → <b>efficiently</b>"},
+  {topic:"형용사 vs 부사", s:"The soup tastes <u>delicious</u> even without salt.", correct:true,
+   why:"감각동사 taste 뒤에는 형용사 보어가 온다.", fix:""},
+  {topic:"형용사 vs 부사", s:"She sings <u>beautiful</u>, and everyone admires her voice.", correct:false,
+   why:"동사 sings를 수식하므로 부사. beautiful → beautifully.", fix:"beautiful → <b>beautifully</b>"},
+  // 대명사
+  {topic:"대명사", s:"The company increased <u>their</u> profits this quarter.", correct:false,
+   why:"company는 단수. their → its.", fix:"their → <b>its</b>"},
+  {topic:"대명사", s:"The two brothers helped <u>each other</u> with the chores.", correct:true,
+   why:"둘 사이의 상호대명사 each other가 알맞다.", fix:""},
+  {topic:"대명사", s:"The children enjoyed <u>them</u> at the amusement park.", correct:false,
+   why:"'enjoy oneself'가 되어야 한다. them → themselves.", fix:"them → <b>themselves</b>"},
+  // 비교
+  {topic:"비교", s:"This building is <u>more taller</u> than the one next to it.", correct:false,
+   why:"이중 비교급 오류. more taller → taller.", fix:"more taller → <b>taller</b>"},
+  {topic:"비교", s:"The more you practice, <u>the better</u> you become.", correct:true,
+   why:"'the 비교급 ~, the 비교급 ~' 구문이 알맞다.", fix:""},
+  {topic:"비교", s:"Her performance was <u>superior than</u> all the others.", correct:false,
+   why:"superior는 than이 아닌 to를 취한다. superior than → superior to.", fix:"superior than → <b>superior to</b>"},
+  // 평행 구조
+  {topic:"평행 구조", s:"She likes reading, jogging, and <u>to swim</u> in her free time.", correct:false,
+   why:"동명사끼리 병렬. to swim → swimming.", fix:"to swim → <b>swimming</b>"},
+  {topic:"평행 구조", s:"The manager was efficient, organized, and <u>reliable</u>.", correct:true,
+   why:"형용사끼리 병렬 구조가 알맞다.", fix:""},
+  {topic:"평행 구조", s:"He not only finished the report but also <u>presenting</u> it to the board.", correct:false,
+   why:"finished와 병렬. presenting → presented.", fix:"presenting → <b>presented</b>"},
+  // 가정법
+  {topic:"가정법", s:"If I <u>was</u> you, I would accept the offer.", correct:false,
+   why:"가정법 과거에서 be동사는 were. was → were.", fix:"was → <b>were</b>"},
+  {topic:"가정법", s:"The doctor recommended that he <u>take</u> the medicine daily.", correct:true,
+   why:"recommend 뒤 that절은 '(should) 동사원형'이 알맞다.", fix:""},
+  {topic:"가정법", s:"If she had studied harder, she <u>would pass</u> the exam.", correct:false,
+   why:"가정법 과거완료. would pass → would have passed.", fix:"would pass → <b>would have passed</b>"},
+  // 전치사 vs 접속사
+  {topic:"전치사 vs 접속사", s:"<u>Despite</u> it was raining, they continued the game.", correct:false,
+   why:"뒤에 절이 오므로 접속사가 필요. Despite → Although.", fix:"Despite → <b>Although</b>"},
+  {topic:"전치사 vs 접속사", s:"<u>Because of</u> the heavy traffic, we arrived late.", correct:true,
+   why:"명사구 앞이므로 전치사구 Because of가 알맞다.", fix:""},
+  {topic:"전치사 vs 접속사", s:"<u>During</u> we were on vacation, our neighbor watered the plants.", correct:false,
+   why:"뒤에 절이 오므로 접속사가 필요. During → While.", fix:"During → <b>While</b>"},
+  // 강조·도치
+  {topic:"강조·도치", s:"Never <u>have I seen</u> such a beautiful sunset.", correct:true,
+   why:"부정어 Never가 문두에 오면 주어·동사가 도치된다.", fix:""},
+  {topic:"강조·도치", s:"Only after the storm passed <u>we could</u> leave the shelter.", correct:false,
+   why:"Only+부사구 문두 → 도치. we could → could we.", fix:"we could → <b>could we</b>"},
+  {topic:"강조·도치", s:"It was <u>in Paris that</u> they first met.", correct:true,
+   why:"'It ~ that' 강조 구문이 알맞게 쓰였다.", fix:""},
+];
+const ROUND=10;
+
+const store=(()=>{let ok=true;try{localStorage.setItem("__t","1");localStorage.removeItem("__t");}catch(e){ok=false;}const m={};
+  return{get:k=>{try{return ok?localStorage.getItem(k):(m[k]??null);}catch(e){return m[k]??null;}},set:(k,v)=>{try{ok?localStorage.setItem(k,v):(m[k]=v);}catch(e){m[k]=v;}}};})();
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+let list=[],pos=0,correct=0,wrong=[];
+function start(){list=shuffle(BANK).slice(0,Math.min(ROUND,BANK.length));pos=0;correct=0;wrong=[];render();}
+start();
+
+function render(){
+  document.getElementById("prog").textContent=`${pos+1} / ${list.length}`;
+  document.getElementById("fill").style.width=(pos/list.length*100)+"%";
+  const q=list[pos],view=document.getElementById("view");
+  view.innerHTML=`<div class="card">
+    <span class="topic">${q.topic}</span>
+    <div class="ask">밑줄 친 부분이 어법상 맞나요?</div>
+    <div class="sentence">${q.s}</div>
+    <div class="ox">
+      <button class="oxbtn o" id="oBtn"><div class="big">O</div><div class="lab">맞다</div></button>
+      <button class="oxbtn x" id="xBtn"><div class="big">X</div><div class="lab">틀리다</div></button>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <button class="next" id="next">${pos<list.length-1?"다음 문제 →":"결과 보기 →"}</button>
+  </div>`;
+  view.querySelector("#oBtn").onclick=()=>answer(true);
+  view.querySelector("#xBtn").onclick=()=>answer(false);
+  view.querySelector("#next").onclick=()=>{if(pos<list.length-1){pos++;render();}else result();};
+}
+function answer(pick){
+  const q=list[pos];
+  document.getElementById("oBtn").disabled=true;document.getElementById("xBtn").disabled=true;
+  document.getElementById(pick?"oBtn":"xBtn").classList.add(pick?"picked-o":"picked-x");
+  const ok=(pick===q.correct);
+  if(ok)correct++;else wrong.push(q);
+  const v=document.getElementById("verdict");
+  v.className="verdict show "+(ok?"right":"wrong");
+  v.innerHTML=`<div class="head">${ok?"정답! ✓":"오답 ✗"} · 정답은 ${q.correct?"O (맞다)":"X (틀리다)"}</div>
+    <div>${q.why}</div>${q.fix?`<div class="fix">✍️ ${q.fix}</div>`:``}`;
+  document.getElementById("next").classList.add("show");
+  document.getElementById("fill").style.width=((pos+1)/list.length*100)+"%";
+}
+function result(){
+  const total=list.length,pct=Math.round(correct/total*100);
+  const grade=pct>=90?["최상위권 어법 감각! 🏆","#059669"]:pct>=70?["안정권, 실수만 줄이면 완벽 👍","#4f46e5"]:pct>=50?["기본은 탄탄, 오답 복습 필수 💪","#d97706"]:["개념부터 다시 다져봐요 📖","#e11d48"];
+  const best=Math.max(parseInt(store.get("gq_best")||"0",10),correct);store.set("gq_best",String(best));
+  const view=document.getElementById("view");
+  view.innerHTML=`<div class="panel">
+    <h2>어법 퀴즈 결과</h2>
+    <div class="score">${correct}<small> / ${total}</small></div>
+    <div class="grade" style="color:${grade[1]}">${grade[0]}</div>
+    <p>정답률 ${pct}% · 최고 기록 ${best} / ${total}</p>
+    ${wrong.length?`<div class="rev"><div style="font-weight:800;font-size:13px;margin-top:16px">틀린 문제 다시 보기</div>${wrong.map(q=>`<div class="item"><div class="s">${q.s}</div><div style="color:var(--muted)">정답 ${q.correct?"O":"X"} · ${q.why} ${q.fix?"("+q.fix.replace(/<[^>]+>/g,"")+")":""}</div></div>`).join("")}</div>`:`<p style="margin-top:14px;color:var(--ok);font-weight:700">전부 정답! 완벽해요 🎉</p>`}
+    <div class="row"><button class="btn solid" id="again">다시 풀기 (새 문제)</button></div>
+  </div>`;
+  document.getElementById("fill").style.width="100%";
+  view.querySelector("#again").onclick=start;
+}
+</script>
+</body>
+</html>
