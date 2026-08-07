@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>듣고 따라 읽기 · MAGIC ENGLISH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.41.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
+<style>
+  :root{--bg:#f4f6fb;--surface:#fff;--ink:#1f2438;--muted:#6b7185;--line:#e6e9f2;--soft:#f4f5fa;
+    --accent:#0369a1;--accent-soft:#e0f2fe;--ok:#059669;--ok-soft:#e7f6ef;--miss:#d97706;--miss-soft:#fdf1e2;--extra:#e11d48;--extra-soft:#fdecec;
+    --shadow:0 16px 40px -24px rgba(31,36,56,.35);--radius:20px;
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{min-height:100vh;display:flex;justify-content:center;padding:22px 14px 40px;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:640px}
+  .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .brand{display:flex;flex-direction:column;line-height:1.15}
+  .brand .kicker{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .brand .name{font-size:18px;font-weight:800;letter-spacing:-.01em}
+  .home{font-size:12px;font-weight:700;color:var(--muted);text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;box-shadow:var(--shadow)}
+  .home:hover{color:var(--accent);border-color:var(--accent)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 20px;margin-bottom:16px}
+  .card h2{font-size:14px;font-weight:800;margin-bottom:4px}
+  .card .sub{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+  textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:14px;padding:14px;font-family:inherit;font-size:14.5px;line-height:1.6;color:var(--ink);background:var(--soft);resize:vertical}
+  textarea:focus{outline:none;border-color:var(--accent);background:#fff}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 14px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);transition:.15s;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn.solid{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.full{width:100%;padding:14px;margin-top:14px}
+  .btn.rec.on{background:var(--extra);color:#fff;border-color:transparent}
+  .badge{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 11px;border-radius:99px}
+  .badge.lock{color:var(--muted);background:var(--soft)}
+  .badge.pro{color:#fff;background:linear-gradient(90deg,#0369a1,#0ea5e9)}
+  .scard{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px 18px;margin-bottom:12px}
+  .snum{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.04em;margin-bottom:6px}
+  .stext{font-family:"Newsreader",serif;font-size:clamp(18px,4.2vw,22px);line-height:1.7;margin-bottom:14px}
+  .stext .w{border-radius:5px;padding:0 1px}
+  .w.ok{background:var(--ok-soft);color:var(--ok)}
+  .w.miss{background:var(--miss-soft);color:var(--miss)}
+  .w.omit{color:#aeb4c6;text-decoration:underline dotted}
+  .row{display:flex;flex-wrap:wrap;gap:8px}
+  .row .btn{flex:1;min-width:84px}
+  .res{margin-top:14px;display:none}
+  .res.show{display:block}
+  .meterwrap{display:flex;flex-direction:column;gap:9px;margin-bottom:6px}
+  .meter{display:grid;grid-template-columns:76px 1fr 42px;align-items:center;gap:10px}
+  .meter .ml{font-size:12px;font-weight:700;color:var(--muted)}
+  .meter .mt{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+  .meter .mf{height:100%;width:0;border-radius:99px;background:var(--accent);transition:width .5s ease}
+  .meter .mv{font-size:12.5px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+  .note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px}
+  .note.warn{color:var(--miss)}
+  .legend{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6}
+  .legend b.o{color:var(--ok)} .legend b.m{color:var(--miss)} .legend b.x{color:#aeb4c6}
+  .grow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  #gbtn{min-height:40px}
+  .foot{text-align:center;font-size:11px;color:var(--muted);margin-top:22px;line-height:1.6}
+  .hide{display:none!important}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <div class="brand"><span class="kicker">Magic English · Read Aloud</span><span class="name">듣고 따라 읽기</span></div>
+    <a class="home" href="index.html">← 홈</a>
+  </div>
+
+  <div class="card">
+    <h2>지문 붙여넣기</h2>
+    <div class="sub">읽고 싶은 영어 지문을 붙여넣고 <b>문장으로 나누기</b>를 누르세요. 문장마다 듣기·녹음·발음 확인을 할 수 있어요.</div>
+    <textarea id="passage" placeholder="Paste an English passage here..."></textarea>
+    <button class="btn solid full" id="splitBtn">문장으로 나누기</button>
+  </div>
+
+  <!-- 2B: 파이널 모의고사와 동일한 로그인/명단을 재사용 -->
+  <div class="card hide" id="proCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+      <h2 style="margin:0">AI 정밀 발음 평가</h2>
+      <span class="badge lock" id="proBadge">파이널 전용</span>
+    </div>
+    <div class="sub" id="proSub">파이널 모의고사 접근 권한이 있는 학생만 사용할 수 있어요. 등록된 Google 계정으로 로그인하세요.</div>
+    <div class="grow"><div id="gbtn"></div><span class="note" id="gstatus"></span></div>
+  </div>
+
+  <div id="list"></div>
+  <div class="foot">듣기·녹음·재생은 모두 무료입니다 · 정밀 발음 평가는 파이널 등록 학생 전용이에요.</div>
+</div>
+
+<script>
+/* ===================== 설정 ===================== */
+/* 같은 서버(Render)에서 서빙하므로 API는 상대경로. Google 클라이언트 ID는
+   서버(/api/final/info)에서 받아오므로 여기서 따로 입력할 필요가 없습니다. */
+const API_BASE = "";
+const AZURE_VOICE = "en-US-AvaNeural";   // 2B 듣기용 고품질 음성 (바꿀 수 있음)
+
+/* ===================== 상태 ===================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const canTTS = ("speechSynthesis" in window);
+const listEl = document.getElementById("list");
+let sentences = [];
+const rec = {};
+let clientId = "";         // /api/final/info 에서 수신
+let cred = null;           // Google ID 토큰(credential) — 파이널과 동일
+let proEmail = "";
+let unlocked = false;
+let azureTok = null, azureTokAt = 0;
+
+/* ===================== 문장 분리 ===================== */
+function splitSentences(text){
+  text = (text||"").replace(/\s+/g," ").trim();
+  if(!text) return [];
+  const parts = text.match(/[^.!?]+[.!?]+["'\u2019\u201d\)\]]*|[^.!?]+$/g) || [];
+  return parts.map(s=>s.trim()).filter(s=>s.length>0);
+}
+function words(s){ return (s.toLowerCase().match(/[a-z0-9']+/g) || []); }
+function esc(s){ return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function show(el, html){ el.innerHTML=html; el.classList.add("show"); }
+
+/* ===================== 듣기 ===================== */
+function speakBrowser(text){
+  if(!canTTS) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=.92;
+    const v=(speechSynthesis.getVoices()||[]).find(x=>/en[-_]US/i.test(x.lang));
+    if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+async function speak(text){
+  if(unlocked){ try{ return await speakAzure(text); }catch(e){} }
+  speakBrowser(text);
+}
+
+/* ===================== 녹음 ===================== */
+async function toggleRecord(i, btn, playBtn){
+  const r = rec[i] || (rec[i]={});
+  if(r.recording){ r.recorder.stop(); return; }
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e){ alert("마이크 사용을 허용해 주세요."); return; }
+  const mr=new MediaRecorder(stream); const chunks=[];
+  mr.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  mr.onstop=()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    if(r.url) URL.revokeObjectURL(r.url);
+    r.url=URL.createObjectURL(new Blob(chunks,{type:mr.mimeType||"audio/webm"}));
+    r.recording=false; btn.classList.remove("on"); btn.textContent="⏺ 녹음"; playBtn.disabled=false;
+  };
+  r.recorder=mr; r.recording=true; btn.classList.add("on"); btn.textContent="⏹ 정지"; mr.start();
+}
+function playRecording(i){ const r=rec[i]; if(r&&r.url) new Audio(r.url).play(); }
+
+/* ===================== 2A: 브라우저 인식 채점 (무료) ===================== */
+function check2A(i, ref, resEl, textEl){
+  if(!SR){ show(resEl, `<div class="note warn">이 브라우저는 음성 인식을 지원하지 않아요. 크롬(데스크톱/안드로이드)에서 사용해 주세요.</div>`); return; }
+  show(resEl, `<div class="note">🎙 지금 문장을 읽어 주세요… (끝나면 자동 채점)</div>`);
+  const r=new SR(); r.lang="en-US"; r.interimResults=false; r.maxAlternatives=1;
+  r.onresult=e=>{ renderMatch(ref, e.results[0][0].transcript||"", resEl, textEl); };
+  r.onerror=e=>{ show(resEl, `<div class="note warn">인식 실패: ${e.error||""}. 마이크 권한·네트워크를 확인해 주세요.</div>`); };
+  try{ r.start(); }catch(e){}
+}
+function renderMatch(ref, said, resEl, textEl){
+  const R=words(ref), S=words(said), used=new Array(S.length).fill(false);
+  let hit=0; const flags=[];
+  R.forEach(w=>{ let f=false; for(let k=0;k<S.length;k++){ if(!used[k]&&S[k]===w){used[k]=true;f=true;break;} } if(f)hit++; flags.push(f); });
+  const pct=R.length?Math.round(hit/R.length*100):0;
+  let wi=0;
+  textEl.innerHTML=esc(ref).split(/(\s+)/).map(tok=>{
+    if(/^\s+$/.test(tok)) return tok;
+    if(!/[a-z0-9']/i.test(tok)) return tok;
+    const cls=flags[wi]?"ok":"miss"; wi++; return `<span class="w ${cls}">${tok}</span>`;
+  }).join("");
+  const color=pct>=90?"var(--ok)":pct>=60?"var(--accent)":"var(--miss)";
+  show(resEl, `<div class="note" style="font-weight:800;color:${color}">인식 일치 ${hit}/${R.length} 단어 · ${pct}%</div>
+    <div class="note">들린 문장: “${esc(said)||"—"}”</div>
+    <div class="legend"><b class="o">■</b> 잘 읽음 &nbsp; <b class="m">■</b> 놓치거나 다르게 읽음</div>`);
+}
+
+/* ===================== 2B: 기존 파이널 로그인/명단 재사용 ===================== */
+window.addEventListener("load", initPro);
+async function initPro(){
+  try{
+    const r=await fetch(API_BASE+"/api/final/info"); const info=await r.json();
+    if(!info || !info.configured || !info.clientId) return;   // 미설정 → 무료기능만
+    clientId=info.clientId;
+    document.getElementById("proCard").classList.remove("hide");
+    const s=document.createElement("script");
+    s.src="https://accounts.google.com/gsi/client"; s.async=true; s.defer=true;
+    s.onload=()=>{ try{
+      google.accounts.id.initialize({ client_id:clientId, callback:onGoogle });
+      google.accounts.id.renderButton(document.getElementById("gbtn"), {theme:"outline",size:"medium",text:"signin_with",shape:"pill"});
+    }catch(e){ setGStatus("로그인 초기화 실패", true); } };
+    s.onerror=()=>setGStatus("로그인 스크립트를 불러오지 못했어요.", true);
+    document.head.appendChild(s);
+  }catch(e){ /* 서버 오프라인 → 무료기능만 사용 */ }
+}
+async function onGoogle(resp){
+  cred=resp.credential; setGStatus("확인 중…");
+  try{
+    await getAzureToken();          // 200이면 허용된 계정
+    unlocked=true;
+    const b=document.getElementById("proBadge"); b.textContent="사용 가능"; b.className="badge pro";
+    document.getElementById("proSub").textContent=(proEmail||"")+" · 정밀 발음 평가와 원어민 음성이 켜졌어요.";
+    setGStatus(""); addProButtons();
+  }catch(e){
+    if(e.message==="not-allowed") setGStatus("이 계정은 파이널 명단에 없어요. 선생님께 등록을 요청하세요.", true);
+    else if(e.message==="not-configured") setGStatus("발음 평가 서버 설정이 아직 완료되지 않았어요.", true);
+    else setGStatus("확인 실패. 잠시 후 다시 시도해 주세요.", true);
+  }
+}
+function setGStatus(t, warn){ const el=document.getElementById("gstatus"); el.textContent=t||""; el.className="note"+(warn?" warn":""); }
+
+async function getAzureToken(){
+  const now=Date.now();
+  if(azureTok && now-azureTokAt < 8*60*1000) return azureTok;   // 8분 캐시
+  if(!cred) throw new Error("reauth");
+  const r=await fetch(API_BASE+"/api/azure/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({credential:cred})});
+  if(r.status===403){ unlocked=false; throw new Error("not-allowed"); }
+  if(r.status===503){ throw new Error("not-configured"); }
+  if(r.status===401){ cred=null; throw new Error("reauth"); }
+  if(!r.ok) throw new Error("token "+r.status);
+  const d=await r.json();
+  proEmail=d.email||proEmail;
+  azureTok={token:d.token, region:d.region}; azureTokAt=now;
+  return azureTok;
+}
+async function speakAzure(text){
+  const {token,region}=await getAzureToken();
+  const S=window.SpeechSDK; if(!S) throw new Error("sdk");
+  const cfg=S.SpeechConfig.fromAuthorizationToken(token,region);
+  cfg.speechSynthesisVoiceName=AZURE_VOICE;
+  const synth=new S.SpeechSynthesizer(cfg, null);
+  return new Promise((res,rej)=>{ synth.speakTextAsync(text, ()=>{synth.close();res();}, e=>{synth.close();rej(e);}); });
+}
+function assessAzure(i, ref, resEl, textEl){
+  show(resEl, `<div class="note">🎙 원어민 채점 준비 중…</div>`);
+  getAzureToken().then(({token,region})=>{
+    const S=window.SpeechSDK;
+    const cfg=S.SpeechConfig.fromAuthorizationToken(token,region);
+    cfg.speechRecognitionLanguage="en-US";
+    const audio=S.AudioConfig.fromDefaultMicrophoneInput();
+    const pa=new S.PronunciationAssessmentConfig(ref, S.PronunciationAssessmentGradingSystem.HundredMark, S.PronunciationAssessmentGranularity.Phoneme, true);
+    try{ pa.enableProsodyAssessment=true; }catch(e){}
+    const reco=new S.SpeechRecognizer(cfg, audio); pa.applyTo(reco);
+    show(resEl, `<div class="note">🎙 지금 읽어 주세요…</div>`);
+    reco.recognizeOnceAsync(result=>{
+      try{ renderAzure(S.PronunciationAssessmentResult.fromResult(result), ref, resEl, textEl); }
+      catch(e){ show(resEl, `<div class="note warn">평가를 완료하지 못했어요. 조용한 곳에서 다시 시도해 주세요.</div>`); }
+      reco.close();
+    }, ()=>{ show(resEl, `<div class="note warn">마이크/네트워크 오류로 평가에 실패했어요.</div>`); reco.close(); });
+  }).catch(e=>{
+    if(e.message==="reauth") setGStatus("로그인이 만료됐어요. 다시 로그인해 주세요.", true);
+    show(resEl, `<div class="note warn">권한 토큰을 받지 못했어요. 상단에서 다시 로그인해 주세요.</div>`);
+  });
+}
+function meter(label, val){
+  const v=Math.round(val||0), col=v>=80?"var(--ok)":v>=60?"var(--accent)":"var(--miss)";
+  return `<div class="meter"><span class="ml">${label}</span><div class="mt"><div class="mf" style="width:${v}%;background:${col}"></div></div><span class="mv" style="color:${col}">${v}</span></div>`;
+}
+function renderAzure(R, ref, resEl, textEl){
+  const acc=R.accuracyScore, flu=R.fluencyScore, comp=R.completenessScore, pron=R.pronunciationScore;
+  let pros=null; try{ pros=R.prosodyScore; }catch(e){}
+  let detail=null; try{ detail=R.detailResult && R.detailResult.Words; }catch(e){}
+  if(detail && detail.length){
+    textEl.innerHTML=detail.map(w=>{
+      const a=w.PronunciationAssessment||{}, et=a.ErrorType||"None";
+      if(et==="Insertion") return "";
+      const cls=et==="Mispronunciation"?"miss":(et==="Omission"?"omit":"ok");
+      return `<span class="w ${cls}" title="${a.AccuracyScore!=null?Math.round(a.AccuracyScore):''}">${esc(w.Word)}</span>`;
+    }).join(" ");
+  }
+  show(resEl, `<div class="meterwrap">${meter("전체",pron)}${meter("정확도",acc)}${meter("유창성",flu)}${meter("완성도",comp)}${pros!=null?meter("억양",pros):""}</div>
+    <div class="legend"><b class="o">■</b> 정확 &nbsp; <b class="m">■</b> 부정확 &nbsp; <b class="x">■</b> 빠뜨림</div>`);
+  logResult(ref, {pron:pron, acc:acc, flu:flu, comp:comp, pros:pros});   // 선생님 기록용
+}
+function logResult(sentence, s){
+  if(!cred) return;
+  fetch(API_BASE+"/api/pron/record",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({credential:cred, sentence:sentence, scores:s})}).catch(()=>{});
+}
+
+/* ===================== 렌더 ===================== */
+function render(){
+  listEl.innerHTML="";
+  sentences.forEach((s,i)=>{
+    const card=document.createElement("div"); card.className="scard";
+    card.innerHTML=
+      `<div class="snum">문장 ${i+1}</div>
+       <div class="stext" id="t${i}">${esc(s)}</div>
+       <div class="row">
+         <button class="btn" data-a="listen">🔊 듣기</button>
+         <button class="btn rec" data-a="rec">⏺ 녹음</button>
+         <button class="btn" data-a="play" disabled>▶ 내 발음</button>
+         <button class="btn" data-a="c2a">✓ 발음 확인</button>
+       </div>
+       <div class="row pro-row ${unlocked?'':'hide'}" style="margin-top:8px">
+         <button class="btn solid" data-a="c2b">★ AI 정밀 발음 평가</button>
+       </div>
+       <div class="res" id="r${i}"></div>`;
+    const textEl=card.querySelector("#t"+i), resEl=card.querySelector("#r"+i);
+    const bL=card.querySelector('[data-a="listen"]'), bR=card.querySelector('[data-a="rec"]'),
+          bP=card.querySelector('[data-a="play"]'), bA=card.querySelector('[data-a="c2a"]'), bB=card.querySelector('[data-a="c2b"]');
+    bL.onclick=()=>speak(s);
+    bR.onclick=()=>toggleRecord(i,bR,bP);
+    bP.onclick=()=>playRecording(i);
+    bA.onclick=()=>check2A(i,s,resEl,textEl);
+    if(bB) bB.onclick=()=>{ textEl.innerHTML=esc(s); assessAzure(i,s,resEl,textEl); };
+    listEl.appendChild(card);
+  });
+}
+function addProButtons(){ document.querySelectorAll(".pro-row").forEach(r=>r.classList.remove("hide")); }
+
+document.getElementById("splitBtn").onclick=()=>{
+  sentences=splitSentences(document.getElementById("passage").value);
+  if(!sentences.length){ alert("먼저 영어 지문을 붙여넣어 주세요."); return; }
+  render(); listEl.scrollIntoView({behavior:"smooth",block:"start"});
+};
+if(canTTS){ try{ speechSynthesis.onvoiceschanged=()=>{}; speechSynthesis.getVoices(); }catch(e){} }
+</script>
+</body>
+</html>

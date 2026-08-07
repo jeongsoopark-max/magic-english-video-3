@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>발음 평가 기록 · MAGIC ENGLISH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  :root{--bg:#f4f6fb;--surface:#fff;--ink:#1f2438;--muted:#6b7185;--line:#e6e9f2;--soft:#f4f5fa;
+    --accent:#0369a1;--accent-soft:#e0f2fe;--ok:#059669;--mid:#0369a1;--miss:#d97706;
+    --shadow:0 16px 40px -24px rgba(31,36,56,.35);--radius:20px;
+    font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink)}
+  body{min-height:100vh;display:flex;justify-content:center;padding:22px 14px 48px;-webkit-font-smoothing:antialiased}
+  .app{width:100%;max-width:860px}
+  .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .brand{display:flex;flex-direction:column;line-height:1.15}
+  .brand .kicker{font-size:11px;letter-spacing:.18em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .brand .name{font-size:18px;font-weight:800;letter-spacing:-.01em}
+  .home{font-size:12px;font-weight:700;color:var(--muted);text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;box-shadow:var(--shadow)}
+  .home:hover{color:var(--accent);border-color:var(--accent)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 20px;margin-bottom:16px}
+  .card h2{font-size:14px;font-weight:800;margin-bottom:10px}
+  input[type=password]{width:100%;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-family:inherit;font-size:14.5px;background:var(--soft)}
+  input:focus{outline:none;border-color:var(--accent);background:#fff}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 15px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--ink);transition:.15s;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+  .btn:hover{transform:translateY(-1px)} .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.solid{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.warn{color:var(--miss);border-color:#f2d6ad}
+  .btn.full{width:100%;padding:13px;margin-top:12px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .grow{flex:1}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .kpi{flex:1;min-width:130px;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .kpi .l{font-size:11px;font-weight:700;color:var(--muted)}
+  .kpi .v{font-size:22px;font-weight:800;font-family:"Newsreader",serif;color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{padding:11px 10px;border-bottom:1px solid var(--line);text-align:center}
+  th{font-size:11.5px;font-weight:800;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
+  th.name,td.name{text-align:left}
+  td.name{font-weight:700}
+  td .em{font-size:11px;color:var(--muted);font-weight:500}
+  .sc{font-weight:800;font-variant-numeric:tabular-nums}
+  .sc.hi{color:var(--ok)} .sc.mid{color:var(--mid)} .sc.lo{color:var(--miss)}
+  tr.stu{cursor:pointer} tr.stu:hover td{background:var(--soft)}
+  .detail td{background:#fbfcfe;text-align:left;padding:0}
+  .attempts{padding:6px 12px 12px}
+  .att{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .att:last-child{border-bottom:none}
+  .att .s{font-family:"Newsreader",serif;font-size:14px;line-height:1.4}
+  .att .t{font-size:11px;color:var(--muted)}
+  .att .pill{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+  .muted{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .warnmsg{font-size:12.5px;color:var(--miss);margin-top:8px}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:26px 0}
+  .hide{display:none!important}
+  @media (max-width:560px){ th.hcol,td.hcol{display:none} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <div class="brand"><span class="kicker">Magic English · Teacher</span><span class="name">발음 평가 기록</span></div>
+    <a class="home" href="index.html">← 홈</a>
+  </div>
+
+  <!-- 로그인 -->
+  <div class="card" id="loginCard">
+    <h2>선생님 로그인</h2>
+    <div class="muted" style="margin-bottom:12px">관리자 비밀번호로 로그인하면 학생별 발음 평가 기록을 볼 수 있어요.</div>
+    <input type="password" id="pw" placeholder="관리자 비밀번호" autocomplete="current-password" />
+    <button class="btn solid full" id="loginBtn">로그인</button>
+    <div class="warnmsg hide" id="loginErr">비밀번호가 올바르지 않아요.</div>
+  </div>
+
+  <!-- 대시보드 -->
+  <div class="card hide" id="dash">
+    <div class="toolbar">
+      <div class="kpis grow">
+        <div class="kpi"><div class="l">학생 수</div><div class="v" id="kStudents">0</div></div>
+        <div class="kpi"><div class="l">총 평가 수</div><div class="v" id="kCount">0</div></div>
+        <div class="kpi"><div class="l">평균 점수</div><div class="v" id="kAvg">–</div></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="refreshBtn">↻ 새로고침</button>
+      <button class="btn" id="csvBtn">⤓ CSV 내보내기</button>
+      <div class="grow"></div>
+      <button class="btn warn" id="clearBtn">기록 비우기</button>
+    </div>
+    <div id="tableWrap"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "";
+let adminToken = "";
+let records = [];
+let sortKey = "ts", sortDir = -1;
+
+/* ---------- 로그인 ---------- */
+const loginBtn=document.getElementById("loginBtn"), pw=document.getElementById("pw"), loginErr=document.getElementById("loginErr");
+loginBtn.onclick=login; pw.addEventListener("keydown",e=>{ if(e.key==="Enter") login(); });
+async function login(){
+  loginErr.classList.add("hide"); loginBtn.disabled=true; loginBtn.textContent="확인 중…";
+  try{
+    const r=await fetch(API_BASE+"/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw.value})});
+    const d=await r.json();
+    if(d.ok && d.token){ adminToken=d.token; document.getElementById("loginCard").classList.add("hide"); document.getElementById("dash").classList.remove("hide"); await load(); }
+    else { loginErr.classList.remove("hide"); }
+  }catch(e){ loginErr.textContent="서버에 연결하지 못했어요."; loginErr.classList.remove("hide"); }
+  loginBtn.disabled=false; loginBtn.textContent="로그인";
+}
+
+/* ---------- 데이터 ---------- */
+async function load(){
+  try{
+    const r=await fetch(API_BASE+"/api/pron/records",{headers:{Authorization:"Bearer "+adminToken}});
+    if(r.status===401){ backToLogin(); return; }
+    const d=await r.json(); records=(d && d.records)||[]; renderDash();
+  }catch(e){ document.getElementById("tableWrap").innerHTML='<div class="empty">기록을 불러오지 못했어요.</div>'; }
+}
+function backToLogin(){ adminToken=""; document.getElementById("dash").classList.add("hide"); document.getElementById("loginCard").classList.remove("hide"); }
+document.getElementById("refreshBtn").onclick=load;
+document.getElementById("clearBtn").onclick=async()=>{
+  if(!confirm("모든 발음 평가 기록을 지울까요? 되돌릴 수 없어요.")) return;
+  await fetch(API_BASE+"/api/pron/clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:adminToken})});
+  await load();
+};
+document.getElementById("csvBtn").onclick=exportCsv;
+
+/* ---------- 집계 ---------- */
+function avg(arr){ const v=arr.filter(x=>x!=null); return v.length? v.reduce((a,b)=>a+b,0)/v.length : null; }
+function groupByStudent(){
+  const m=new Map();
+  records.forEach(r=>{
+    let g=m.get(r.email); if(!g){ g={email:r.email, name:r.name||"", items:[]}; m.set(r.email,g); }
+    if(r.name) g.name=r.name; g.items.push(r);
+  });
+  const out=[];
+  m.forEach(g=>{
+    out.push({
+      email:g.email, name:g.name, count:g.items.length,
+      pron:avg(g.items.map(x=>x.pron)), acc:avg(g.items.map(x=>x.acc)),
+      flu:avg(g.items.map(x=>x.flu)), comp:avg(g.items.map(x=>x.comp)), pros:avg(g.items.map(x=>x.pros)),
+      ts:Math.max.apply(null,g.items.map(x=>x.ts)), items:g.items.slice().sort((a,b)=>b.ts-a.ts)
+    });
+  });
+  return out;
+}
+function scls(v){ return v==null?"":(v>=80?"hi":(v>=60?"mid":"lo")); }
+function fmt(v){ return v==null?"–":Math.round(v); }
+function when(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,"0"); return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+/* ---------- 렌더 ---------- */
+function renderDash(){
+  const students=groupByStudent();
+  document.getElementById("kStudents").textContent=students.length;
+  document.getElementById("kCount").textContent=records.length;
+  document.getElementById("kAvg").textContent=fmt(avg(records.map(x=>x.pron)));
+  const wrap=document.getElementById("tableWrap");
+  if(!students.length){ wrap.innerHTML='<div class="empty">아직 발음 평가 기록이 없어요.<br>학생이 read-aloud에서 ★ AI 정밀 발음 평가를 사용하면 여기에 쌓입니다.</div>'; return; }
+  students.sort((a,b)=>{ const A=a[sortKey], B=b[sortKey]; const av=A==null?-1:A, bv=B==null?-1:B; return (av<bv?-1:av>bv?1:0)*sortDir; });
+  const cols=[["name","학생",""],["count","횟수",""],["pron","전체",""],["acc","정확도","hcol"],["flu","유창성","hcol"],["comp","완성도","hcol"],["pros","억양","hcol"],["ts","최근",""]];
+  let html='<table><thead><tr>'+cols.map(c=>`<th class="${c[0]==='name'?'name ':''}${c[2]}" data-k="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir<0?' ▾':' ▴'):''}</th>`).join('')+'</tr></thead><tbody>';
+  students.forEach((s,idx)=>{
+    html+=`<tr class="stu" data-i="${idx}">
+      <td class="name">${escapeHtml(s.name||s.email.split("@")[0])}<div class="em">${escapeHtml(s.email)}</div></td>
+      <td>${s.count}</td>
+      <td class="sc ${scls(s.pron)}">${fmt(s.pron)}</td>
+      <td class="sc ${scls(s.acc)} hcol">${fmt(s.acc)}</td>
+      <td class="sc ${scls(s.flu)} hcol">${fmt(s.flu)}</td>
+      <td class="sc ${scls(s.comp)} hcol">${fmt(s.comp)}</td>
+      <td class="sc ${scls(s.pros)} hcol">${fmt(s.pros)}</td>
+      <td>${when(s.ts)}</td></tr>
+      <tr class="detail hide" id="d${idx}"><td colspan="8"><div class="attempts">${s.items.slice(0,20).map(it=>
+        `<div class="att"><div><div class="s">${escapeHtml(it.sentence)}</div><div class="t">${when(it.ts)}</div></div>
+          <span class="pill">전체 ${fmt(it.pron)} · 정확 ${fmt(it.acc)} · 유창 ${fmt(it.flu)}</span></div>`).join("")}</div></td></tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  wrap.querySelectorAll("th").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=(k==="name"?1:-1); } renderDash(); });
+  wrap.querySelectorAll("tr.stu").forEach(tr=>tr.onclick=()=>{ document.getElementById("d"+tr.dataset.i).classList.toggle("hide"); });
+}
+function escapeHtml(s){ return String(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- CSV ---------- */
+function exportCsv(){
+  const head=["email","name","datetime","sentence","overall","accuracy","fluency","completeness","prosody"];
+  const rows=records.slice().sort((a,b)=>a.ts-b.ts).map(r=>[
+    r.email, r.name||"", new Date(r.ts).toISOString(), (r.sentence||"").replace(/"/g,'""'),
+    r.pron??"", r.acc??"", r.flu??"", r.comp??"", r.pros??""
+  ]);
+  const csv=[head].concat(rows).map(row=>row.map(v=>/[",\n]/.test(String(v))?'"'+v+'"':v).join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="pronunciation-records.csv"; a.click(); URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
