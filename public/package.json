@@ -1,0 +1,19 @@
+{
+  "name": "magic-english-video-3",
+  "version": "1.0.0",
+  "description": "MAGIC ENGLISH 통합 학습 포털 — 화상 수업 시그널링 서버 및 학습 포털 백엔드",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.22.2",
+    "socket.io": "^4.8.3",
+    "google-auth-library": "^9.15.1",
+    "pg": "^8.13.1"
+  }
+}
