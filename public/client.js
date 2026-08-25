@@ -105,6 +105,86 @@ const wbLayoutRightBtn = document.getElementById('wb-layout-right-btn');
 const wbLayoutTopBtn = document.getElementById('wb-layout-top-btn');
 const wbSharePdfFileBtn = document.getElementById('wb-share-pdf-file-btn');
 
+// ---- 카메라/마이크 트랙이 수업 중 갑자기 끊기는 문제 자동 복구 ----------------
+// 지금까지는 getUserMedia를 딱 한 번만 호출하고, 이후 트랙이 죽어도(다른
+// 앱이 카메라를 가로챔, USB 웹캠 분리, OS 권한 변경 등) 아무도 감지하지
+// 않았다. 여기서 감지해서 새 트랙으로 자동 교체를 시도하고, 실패하면
+// 화면에 경고를 띄운다.
+let deviceWarningEl = null;
+let recoveringVideo = false;
+let recoveringAudio = false;
+
+function showDeviceWarning(message) {
+  if (!deviceWarningEl) {
+    deviceWarningEl = document.createElement('div');
+    deviceWarningEl.style.cssText =
+      'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;' +
+      'background:#dc2626;color:#fff;padding:10px 18px;border-radius:10px;' +
+      'font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.3);max-width:90vw;text-align:center;';
+    document.body.appendChild(deviceWarningEl);
+  }
+  deviceWarningEl.textContent = message;
+  deviceWarningEl.style.display = 'block';
+}
+function hideDeviceWarning() {
+  if (deviceWarningEl) deviceWarningEl.style.display = 'none';
+}
+
+async function recoverTrack(kind) {
+  if (kind === 'video' && recoveringVideo) return;
+  if (kind === 'audio' && recoveringAudio) return;
+  if (kind === 'video') recoveringVideo = true; else recoveringAudio = true;
+
+  try {
+    const constraints = kind === 'video' ? { video: true } : { audio: true };
+    const fresh = await navigator.mediaDevices.getUserMedia(constraints);
+    const newTrack = kind === 'video' ? fresh.getVideoTracks()[0] : fresh.getAudioTracks()[0];
+    if (!newTrack) throw new Error('no-track');
+
+    const oldTracks = kind === 'video' ? localStream.getVideoTracks() : localStream.getAudioTracks();
+    oldTracks.forEach((t) => { localStream.removeTrack(t); try { t.stop(); } catch (e) { /* noop */ } });
+    localStream.addTrack(newTrack);
+    attachTrackWatcher(newTrack);
+
+    if (kind === 'video') {
+      newTrack.enabled = camOn;
+      applyOutgoingVideoToAllPeers();
+      updateLocalPreview();
+    } else {
+      newTrack.enabled = micOn;
+      peerConnections.forEach((pc) => {
+        const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'audio');
+        if (sender) sender.replaceTrack(newTrack);
+      });
+      if (window.AudioControls) AudioControls.setLocalStream(localStream);
+    }
+    hideDeviceWarning();
+  } catch (err) {
+    showDeviceWarning(
+      kind === 'video'
+        ? '⚠️ 카메라 연결이 끊어졌어요. 다른 앱이 카메라를 쓰고 있는지 확인 후 새로고침 해주세요.'
+        : '⚠️ 마이크 연결이 끊어졌어요. 다른 앱이 마이크를 쓰고 있는지 확인 후 새로고침 해주세요.'
+    );
+  } finally {
+    if (kind === 'video') recoveringVideo = false; else recoveringAudio = false;
+  }
+}
+
+function attachTrackWatcher(track) {
+  track.addEventListener('ended', () => {
+    if (!enteredCall) return; // 수업 종료 후엔 무시
+    recoverTrack(track.kind);
+  });
+}
+
+// 'ended' 이벤트가 안 오는 예외적인 경우를 위한 보조 점검 (10초 간격)
+setInterval(() => {
+  if (!enteredCall || !localStream) return;
+  localStream.getTracks().forEach((t) => {
+    if (t.readyState === 'ended') recoverTrack(t.kind);
+  });
+}, 10000);
+
 // State
 let localStream = null;      // camera + mic, from getUserMedia
 let screenStream = null;     // active only while screen-sharing
@@ -241,6 +321,23 @@ joinBtn.addEventListener('click', joinRoom);
   el.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); })
 );
 
+// 방금 전 수업을 나가면서 카메라를 반납한 직후, 새로고침 없이 바로 다음
+// 수업에 들어가면 OS/브라우저가 하드웨어를 아직 완전히 놓아주지 않은
+// 짧은 순간과 겹쳐 getUserMedia가 실패하는 경우가 있다(특히
+// NotReadableError). 사용자에게 에러를 보여주기 전에 짧게 한 번만
+// 자동으로 다시 시도한다.
+async function getUserMediaWithRetry() {
+  try {
+    return await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  } catch (err) {
+    if (err && (err.name === 'NotReadableError' || err.name === 'AbortError')) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      return navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    }
+    throw err;
+  }
+}
+
 async function joinRoom() {
   joinError.textContent = '';
   const name = nameInput.value.trim() || 'Guest';
@@ -281,7 +378,8 @@ async function joinRoom() {
     return;
   }
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await getUserMediaWithRetry();
+    localStream.getTracks().forEach(attachTrackWatcher);
   } catch (err) {
     joinError.textContent =
       (err && err.name === 'NotAllowedError')
@@ -668,6 +766,21 @@ socket.on('signal', async ({ from, data }) => {
   }
 });
 
+// restartIce()를 다 써도(최대 2번) 살아나지 않는 연결을 위한 마지막 수단.
+// 그 한 사람과의 RTCPeerConnection만 통째로 닫고 새로 만든다 — 나머지
+// 참여자는 전혀 영향받지 않고, 상대도 화면을 나갔다 들어올 필요 없이
+// 자동으로 복구된다.
+function recreatePeerConnection(peerId) {
+  const old = peerConnections.get(peerId);
+  if (!old) return;
+  const wasInitiator = !!old._isInitiator;
+  if (old._connPoll) clearInterval(old._connPoll);
+  try { old.close(); } catch (e) { /* noop */ }
+  peerConnections.delete(peerId);
+  setTileReconnecting(peerId, true);
+  createPeerConnection(peerId, wasInitiator);
+}
+
 function createPeerConnection(peerId, isInitiator) {
   const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   pc._isInitiator = !!isInitiator;
@@ -729,6 +842,15 @@ function createPeerConnection(peerId, isInitiator) {
             try { pc.restartIce(); } catch (e) { /* older browsers: rely on socket rejoin */ }
           }
         }, st === 'disconnected' ? 2500 : 0);
+      } else if (pc._isInitiator) {
+        // restartIce()를 다 썼는데도 안 살아났다 — 이 피어 연결만 새로 만든다.
+        // (전체 나갔다 들어오기 없이도 학생/선생님 쪽에서 자동 복구됨)
+        setTimeout(() => {
+          const cur = peerConnections.get(peerId);
+          if (cur === pc && (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected')) {
+            recreatePeerConnection(peerId);
+          }
+        }, 6000);
       }
     } else if (st === 'connected' || st === 'completed') {
       pc._iceRestartTries = 0;
@@ -760,6 +882,16 @@ function addVideoTile(id, kind, label, stream, muted) {
   video.playsInline = true;
   video.muted = muted;
   video.srcObject = stream;
+
+  // 소리가 있는 원격 영상은 브라우저(특히 카카오톡 인앱브라우저·모바일)가
+  // 자동재생을 막는 경우가 있다. play()가 거부되면 조용히 방치되던 것을,
+  // 감지해서 "탭해서 소리 켜기" 오버레이를 보여주도록 한다.
+  const playAttempt = video.play();
+  if (playAttempt && typeof playAttempt.catch === 'function') {
+    playAttempt.catch(() => {
+      if (!muted) showEnableAudioOverlay(tile, video);
+    });
+  }
 
   const labelEl = document.createElement('div');
   labelEl.className = 'tile-label';
@@ -796,6 +928,25 @@ function addVideoTile(id, kind, label, stream, muted) {
     setTileConn(id, 'weak');   // 연결 수립 중 → 노랑
     setTileMic(id, true);      // 원격 마이크는 상대의 mic-state 신호로 갱신(기본 켜짐)
   }
+}
+
+// 자동재생(소리 포함)이 브라우저 정책으로 막혔을 때 보여주는 오버레이.
+// 탭하면 그 클릭 자체가 사용자 제스처라 play()가 대부분 성공한다.
+function showEnableAudioOverlay(tile, video) {
+  if (tile.querySelector('.tile-enable-audio')) return; // 이미 떠있으면 중복 생성 방지
+  const overlay = document.createElement('button');
+  overlay.type = 'button';
+  overlay.className = 'tile-enable-audio';
+  overlay.textContent = '🔇 탭해서 소리 켜기';
+  overlay.style.cssText =
+    'position:absolute;inset:0;width:100%;height:100%;border:none;cursor:pointer;' +
+    'background:rgba(0,0,0,.55);color:#fff;font-size:13px;font-weight:700;' +
+    'display:flex;align-items:center;justify-content:center;z-index:5;';
+  overlay.addEventListener('click', () => {
+    video.play().then(() => overlay.remove()).catch(() => { /* 다시 탭하면 재시도됨 */ });
+  });
+  tile.style.position = tile.style.position || 'relative';
+  tile.appendChild(overlay);
 }
 
 // 타일의 연결 상태 점을 갱신. level: 'good' | 'weak' | 'bad'
@@ -1380,6 +1531,23 @@ function sizeWhiteboardCanvas() {
   if (changed) renderCurrentPage();
 }
 
+// renderCurrentPage()는 페이지의 모든 획을 처음부터 다시 그리는 무거운
+// 함수라, 포인터 이동(팬/선택영역/형광펜)이나 원격 획 수신처럼 짧은 시간에
+// 아주 여러 번 발생하는 이벤트에서 매번 동기적으로 호출하면 그 비용이
+// 누적되어 메인 스레드를 막아버릴 수 있다(획이 많이 쌓인 수업 후반부일수록
+// 한 번의 호출 비용 자체도 커져서 더 위험해진다). 프레임당 최대 한 번만
+// 실행되도록 묶어서, 같은 프레임 안에 몰리는 이벤트들은 리드로우 한 번으로
+// 합쳐지게 한다.
+let wbRedrawRafPending = false;
+function scheduleRenderCurrentPage() {
+  if (wbRedrawRafPending) return;
+  wbRedrawRafPending = true;
+  requestAnimationFrame(() => {
+    wbRedrawRafPending = false;
+    renderCurrentPage();
+  });
+}
+
 // Render the current page: PDF background (if any) + all its strokes.
 function renderCurrentPage() {
   if (!wbCtx) return;
@@ -1717,7 +1885,7 @@ function wbPointerMove(e) {
     wbPanX = wbPanStart.panX + (e.clientX - wbPanStart.x) * dpr / r.w;
     wbPanY = wbPanStart.panY + (e.clientY - wbPanStart.y) * dpr / r.h;
     clampStoredPan();
-    renderCurrentPage();
+    scheduleRenderCurrentPage();
     queueViewBroadcast();
     e.preventDefault();
     return;
@@ -1730,7 +1898,7 @@ function wbPointerMove(e) {
       x1: Math.min(wbSelStart.x, p.x), y1: Math.min(wbSelStart.y, p.y),
       x2: Math.max(wbSelStart.x, p.x), y2: Math.max(wbSelStart.y, p.y),
     };
-    renderCurrentPage();
+    scheduleRenderCurrentPage();
     e.preventDefault();
     return;
   }
@@ -1759,7 +1927,7 @@ function wbPointerMove(e) {
     wbQueueSend(p);
   });
   // Highlight strokes redraw the whole page so the translucent path stays uniform.
-  if (stroke.highlight) renderCurrentPage(); else drawStrokeSegment(stroke, fromIdx);
+  if (stroke.highlight) scheduleRenderCurrentPage(); else drawStrokeSegment(stroke, fromIdx);
   e.preventDefault();
 }
 
@@ -1872,7 +2040,7 @@ socket.on('wb-stroke', ({ pageId, id, color, width, erase, highlight, points }) 
   points.forEach((p) => stroke.points.push(p));
   if (wbActive && pg.id === (currentPageObj() && currentPageObj().id)) {
     // Highlight strokes must redraw the whole page to keep uniform translucency.
-    if (stroke.highlight) renderCurrentPage();
+    if (stroke.highlight) scheduleRenderCurrentPage();
     else drawStrokeSegment(stroke, fromIdx === 0 ? 0 : fromIdx);
   }
 });
