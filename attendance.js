@@ -86,7 +86,35 @@ function parseTeamsNames(rawText) {
   return Array.from(new Set(names));
 }
 
-// --- Attendance capture, called from server.js socket handlers -----------
+// --- 문자(SMS)로 들어오는 학생 정보 파싱 -----------------------------------
+// "이름(태그)" 형태의 줄을 새 블록의 시작으로 보고, 그 아래 "생 010..."
+// (학생 번호) / "모 010..." 또는 "부 010..." (학부모 번호) 줄을 찾는다.
+// 여러 건이 한 번에 붙여넣어져도 블록 단위로 잘라서 각각 반환한다.
+function parseSmsBlocks(rawText) {
+  const lines = String(rawText || '').split(/\r?\n/);
+  const headerRe = /^(.{2,10}?)\([^)]*\)\s*$/;
+  const blocks = [];
+  let current = null;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    const m = line.match(headerRe);
+    if (m) {
+      if (current) blocks.push(current);
+      current = { name: m[1].trim(), studentPhone: '', parentPhone: '' };
+      continue;
+    }
+    if (!current) continue;
+    const sm = line.match(/^생\s*[:.]?\s*([0-9][0-9\s-]{8,14})/);
+    if (sm) current.studentPhone = sm[1].replace(/[\s-]/g, '');
+    const pm = line.match(/^(모|부)\s*[:.]?\s*([0-9][0-9\s-]{8,14})/);
+    if (pm) current.parentPhone = pm[2].replace(/[\s-]/g, '');
+  }
+  if (current) blocks.push(current);
+  return blocks.filter((b) => b.name);
+}
+
+
 
 async function recordJoin({ name, roomId }) {
   if (!db.enabled) return null;
@@ -251,6 +279,50 @@ function buildRouter({ verifyToken, bearer }) {
 
   router.delete('/students/:id', async (req, res) => {
     await db.query('DELETE FROM students WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  });
+
+  // 문자로 들어온 학생 정보 -------------------------------------------------
+  router.post('/sms-import', async (req, res) => {
+    const { rawText } = req.body || {};
+    if (!rawText) return res.status(400).json({ ok: false, error: 'missing-fields' });
+    const blocks = parseSmsBlocks(rawText);
+    let inserted = 0;
+    for (const b of blocks) {
+      await db.query(
+        `INSERT INTO sms_intake (name, student_phone, parent_phone, raw_text) VALUES ($1,$2,$3,$4)`,
+        [b.name, b.studentPhone, b.parentPhone, rawText]
+      );
+      inserted += 1;
+    }
+    res.json({ ok: true, count: inserted, items: blocks });
+  });
+
+  router.get('/sms-pending', async (req, res) => {
+    const r = await db.query(
+      `SELECT * FROM sms_intake WHERE claimed=false ORDER BY created_at DESC LIMIT 200`
+    );
+    res.json({ ok: true, items: r.rows });
+  });
+
+  router.post('/sms-pending/:id/claim', async (req, res) => {
+    const { roomId, scheduleDays, scheduleTime } = req.body || {};
+    if (!roomId) return res.status(400).json({ ok: false, error: 'missing-fields' });
+    const rowRes = await db.query('SELECT * FROM sms_intake WHERE id=$1 AND claimed=false', [req.params.id]);
+    const row = rowRes.rows[0];
+    if (!row) return res.status(404).json({ ok: false, error: 'not-found' });
+
+    const studentRes = await db.query(
+      `INSERT INTO students (name, room_id, parent_phone, schedule_days, schedule_time)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [row.name.slice(0, 40), String(roomId), row.parent_phone || '', scheduleDays || '', scheduleTime || '']
+    );
+    await db.query('UPDATE sms_intake SET claimed=true WHERE id=$1', [row.id]);
+    res.json({ ok: true, student: studentRes.rows[0] });
+  });
+
+  router.delete('/sms-pending/:id', async (req, res) => {
+    await db.query('DELETE FROM sms_intake WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   });
 
@@ -432,4 +504,32 @@ function buildRouter({ verifyToken, bearer }) {
   return router;
 }
 
-module.exports = { recordJoin, recordLeave, startScheduler, buildRouter, isKakaoConfigured };
+// 폰 자동화 앱(MacroDroid 등)이 문자 수신 시 호출하는 웹훅. 관리자 로그인
+// 토큰(8시간 만료)과는 별개로, SMS_INTAKE_SECRET 환경변수 하나로만 인증한다.
+// 이 값이 설정돼 있지 않으면 항상 503을 반환해 실수로 열려있지 않게 한다.
+function buildWebhookRouter() {
+  const router = express.Router();
+  router.post('/', async (req, res) => {
+    const secret = process.env.SMS_INTAKE_SECRET || '';
+    if (!secret) return res.status(503).json({ ok: false, error: 'sms-intake-not-configured' });
+    if (!db.enabled) return res.status(503).json({ ok: false, error: 'db-not-configured' });
+
+    const provided = req.headers['x-intake-key'] || (req.body && req.body.key) || '';
+    if (provided !== secret) return res.status(401).json({ ok: false, error: 'unauthorized' });
+
+    const rawText = (req.body && req.body.text) || '';
+    if (!rawText) return res.status(400).json({ ok: false, error: 'missing-text' });
+
+    const blocks = parseSmsBlocks(rawText);
+    for (const b of blocks) {
+      await db.query(
+        `INSERT INTO sms_intake (name, student_phone, parent_phone, raw_text) VALUES ($1,$2,$3,$4)`,
+        [b.name, b.studentPhone, b.parentPhone, rawText]
+      );
+    }
+    res.json({ ok: true, count: blocks.length });
+  });
+  return router;
+}
+
+module.exports = { recordJoin, recordLeave, startScheduler, buildRouter, buildWebhookRouter, isKakaoConfigured };

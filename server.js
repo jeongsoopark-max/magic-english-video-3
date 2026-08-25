@@ -220,6 +220,8 @@ app.use(express.json({ limit: '64kb' }));
 
 // 출석 / 결석 학부모 알림 API (관리자 토큰 필요)
 app.use('/api/admin/attendance', attendance.buildRouter({ verifyToken, bearer }));
+// 폰 자동화 앱(MacroDroid 등)이 문자 수신 시 호출하는 웹훅 (SMS_INTAKE_SECRET로 인증)
+app.use('/api/sms-intake', attendance.buildWebhookRouter());
 
 // Student site access: verify the shared code, return a short-lived token.
 app.post('/api/access/login', (req, res) => {

@@ -69,6 +69,16 @@ CREATE TABLE IF NOT EXISTS notification_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   resolved_at TIMESTAMPTZ
 );
+
+CREATE TABLE IF NOT EXISTS sms_intake (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  student_phone TEXT DEFAULT '',
+  parent_phone TEXT DEFAULT '',
+  raw_text TEXT,
+  claimed BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 async function initSchema() {
