@@ -1232,7 +1232,7 @@
                     '<td class="p-2">' + escapeHtml(it.room_id) + '</td>' +
                     '<td class="p-2">' + it.cnt + '회</td>' +
                     '<td class="p-2">' + escapeHtml(String(it.last_date).slice(0, 10)) + '</td>' +
-                    '<td class="p-2"><button class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 px-3 py-1.5 rounded-lg text-[11px] font-bold" onclick="startUnmatchedRegister(' + JSON.stringify(it.room_id) + ',' + JSON.stringify(it.matched_name) + ')">학생으로 등록</button></td>';
+                    '<td class="p-2"><button class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 px-3 py-1.5 rounded-lg text-[11px] font-bold" onclick=\'startUnmatchedRegister(' + JSON.stringify(it.room_id) + ',' + JSON.stringify(it.matched_name) + ')\'>학생으로 등록</button></td>';
                 body.appendChild(tr);
             });
         }
@@ -1391,7 +1391,7 @@
                     '</div>' +
                     '<div class="flex gap-2 flex-shrink-0">' +
                     (it.status === 'pending' ? (
-                        '<button onclick="copyAttMessage(this, ' + JSON.stringify(it.message) + ')" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-[11px] font-bold">📋 문구 복사</button>' +
+                        '<button onclick=\'copyAttMessage(this, ' + JSON.stringify(it.message) + ')\' class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-[11px] font-bold">📋 문구 복사</button>' +
                         '<button onclick="resolveAbsence(' + it.log_id + ', \'send\')" class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 px-3 py-1.5 rounded-lg text-[11px] font-bold">발송완료로 표시</button>' +
                         '<button onclick="resolveAbsence(' + it.log_id + ', \'skip\')" class="bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1.5 rounded-lg text-[11px] font-bold">보류</button>'
                     ) : '') +
@@ -1466,7 +1466,7 @@
                     '<td class="p-2">' + escapeHtml(it.student_phone || '-') + '</td>' +
                     '<td class="p-2">' + escapeHtml(it.parent_phone || '-') + '</td>' +
                     '<td class="p-2 flex gap-2">' +
-                    '<button class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 px-3 py-1.5 rounded-lg text-[11px] font-bold" onclick="startSmsRegister(' + it.id + ',' + JSON.stringify(it.name) + ',' + JSON.stringify(it.parent_phone || '') + ')">학생으로 등록</button>' +
+                    '<button class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 px-3 py-1.5 rounded-lg text-[11px] font-bold" onclick=\'startSmsRegister(' + it.id + ',' + JSON.stringify(it.name) + ',' + JSON.stringify(it.parent_phone || '') + ')\'>학생으로 등록</button>' +
                     '<button class="bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1.5 rounded-lg text-[11px] font-bold" onclick="deleteSmsPending(' + it.id + ')">삭제</button>' +
                     '</td>';
                 body.appendChild(tr);
