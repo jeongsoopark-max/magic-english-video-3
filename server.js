@@ -13,6 +13,18 @@
 //      until the host admits or denies them.
 
 const path = require('path');
+
+// 서버 전체가 죽는 것을 막는 마지막 안전장치. 개별 API/소켓 핸들러는 각자
+// try/catch로 방어하지만, 혹시 놓친 곳이 있어도 여기서 잡아서 로그만 남기고
+// 프로세스는 계속 살아있게 한다 — 수업 중 서버가 죽으면 그 순간 접속해 있던
+// 모든 사람의 화상 연결이 동시에 끊기기 때문에, 개별 요청 실패보다 전체
+// 다운타임이 훨씬 나쁘다.
+process.on('unhandledRejection', (err) => {
+  console.error('[fatal-guard] unhandled rejection (server kept running):', err && err.stack || err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[fatal-guard] uncaught exception (server kept running):', err && err.stack || err);
+});
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');

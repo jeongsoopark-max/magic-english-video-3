@@ -57,6 +57,23 @@ function buildMessage(student, dateStr) {
   return `[MAGIC ENGLISH] ${student.name} 학생이 ${dateStr} 수업에 참석하지 않았습니다. 확인 부탁드립니다.`;
 }
 
+// 이 파일의 모든 API 핸들러는 async라서, DB 쿼리가 하나라도 실패하면(예:
+// 무료 Postgres가 절전 모드에서 깨어나는 순간의 일시적 연결 오류) 그 에러가
+// Express 밖으로 새어나가 Node 프로세스 전체를 죽일 수 있다(Node 15+는
+// 처리되지 않은 프라미스 거부 시 기본적으로 프로세스를 종료함). 이건 그
+// 순간 접속해 있던 모든 사람의 화상 수업을 동시에 끊어버리는 결과로
+// 이어지므로, 모든 라우트를 이 래퍼로 감싸서 500 응답만 내려주고 서버는
+// 계속 살아있도록 한다. buildRouter와 buildWebhookRouter가 함께 쓰므로
+// 모듈 최상위에 둔다.
+function ah(fn) {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch((err) => {
+      console.error('[attendance] route error:', err && err.message);
+      if (!res.headersSent) res.status(500).json({ ok: false, error: 'server-error' });
+    });
+  };
+}
+
 // --- Teams 단체반 출석: 선생님이 팀즈 "참가자" 목록을 붙여넣으면 파싱한다 ---
 // Teams에서 회의 종료 후 참석자 패널을 복사하면 보통
 // "이름 \t 첫 참가 \t 마지막 퇴장 \t 기간" 형태의 탭 구분 텍스트가 됨.
@@ -248,12 +265,12 @@ function buildRouter({ verifyToken, bearer }) {
   router.use(requireAdmin);
 
   // Students -----------------------------------------------------------
-  router.get('/students', async (req, res) => {
+  router.get('/students', ah(async (req, res) => {
     const r = await db.query('SELECT * FROM students ORDER BY room_id, name');
     res.json({ ok: true, students: r.rows });
-  });
+  }));
 
-  router.post('/students', async (req, res) => {
+  router.post('/students', ah(async (req, res) => {
     const { name, roomId, parentPhone, scheduleDays, scheduleTime } = req.body || {};
     if (!name || !roomId) return res.status(400).json({ ok: false, error: 'missing-fields' });
     const r = await db.query(
@@ -262,9 +279,9 @@ function buildRouter({ verifyToken, bearer }) {
       [String(name).slice(0, 40), String(roomId), parentPhone || '', scheduleDays || '', scheduleTime || '']
     );
     res.json({ ok: true, student: r.rows[0] });
-  });
+  }));
 
-  router.put('/students/:id', async (req, res) => {
+  router.put('/students/:id', ah(async (req, res) => {
     const { name, roomId, parentPhone, scheduleDays, scheduleTime, active } = req.body || {};
     const r = await db.query(
       `UPDATE students SET name=COALESCE($1,name), room_id=COALESCE($2,room_id),
@@ -275,15 +292,15 @@ function buildRouter({ verifyToken, bearer }) {
     );
     if (!r.rows[0]) return res.status(404).json({ ok: false, error: 'not-found' });
     res.json({ ok: true, student: r.rows[0] });
-  });
+  }));
 
-  router.delete('/students/:id', async (req, res) => {
+  router.delete('/students/:id', ah(async (req, res) => {
     await db.query('DELETE FROM students WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
-  });
+  }));
 
   // 문자로 들어온 학생 정보 -------------------------------------------------
-  router.post('/sms-import', async (req, res) => {
+  router.post('/sms-import', ah(async (req, res) => {
     const { rawText } = req.body || {};
     if (!rawText) return res.status(400).json({ ok: false, error: 'missing-fields' });
     const blocks = parseSmsBlocks(rawText);
@@ -296,16 +313,16 @@ function buildRouter({ verifyToken, bearer }) {
       inserted += 1;
     }
     res.json({ ok: true, count: inserted, items: blocks });
-  });
+  }));
 
-  router.get('/sms-pending', async (req, res) => {
+  router.get('/sms-pending', ah(async (req, res) => {
     const r = await db.query(
       `SELECT * FROM sms_intake WHERE claimed=false ORDER BY created_at DESC LIMIT 200`
     );
     res.json({ ok: true, items: r.rows });
-  });
+  }));
 
-  router.post('/sms-pending/:id/claim', async (req, res) => {
+  router.post('/sms-pending/:id/claim', ah(async (req, res) => {
     const { roomId, scheduleDays, scheduleTime } = req.body || {};
     if (!roomId) return res.status(400).json({ ok: false, error: 'missing-fields' });
     const rowRes = await db.query('SELECT * FROM sms_intake WHERE id=$1 AND claimed=false', [req.params.id]);
@@ -319,16 +336,16 @@ function buildRouter({ verifyToken, bearer }) {
     );
     await db.query('UPDATE sms_intake SET claimed=true WHERE id=$1', [row.id]);
     res.json({ ok: true, student: studentRes.rows[0] });
-  });
+  }));
 
-  router.delete('/sms-pending/:id', async (req, res) => {
+  router.delete('/sms-pending/:id', ah(async (req, res) => {
     await db.query('DELETE FROM sms_intake WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
-  });
+  }));
 
   // 미매칭 출석: 명부에 없는 이름으로 들어온 기록들을 모아 보여주고,
   // 그 자리에서 학생으로 등록하면서 기존 출석 기록도 함께 연결한다.
-  router.get('/unmatched', async (req, res) => {
+  router.get('/unmatched', ah(async (req, res) => {
     const r = await db.query(
       `SELECT room_id, matched_name, COUNT(*) AS cnt, MAX(class_date) AS last_date
        FROM attendance
@@ -337,9 +354,9 @@ function buildRouter({ verifyToken, bearer }) {
        ORDER BY last_date DESC`
     );
     res.json({ ok: true, items: r.rows });
-  });
+  }));
 
-  router.post('/unmatched/register', async (req, res) => {
+  router.post('/unmatched/register', ah(async (req, res) => {
     const { roomId, matchedName, parentPhone, scheduleDays, scheduleTime } = req.body || {};
     if (!roomId || !matchedName) return res.status(400).json({ ok: false, error: 'missing-fields' });
 
@@ -377,10 +394,10 @@ function buildRouter({ verifyToken, bearer }) {
     }
 
     res.json({ ok: true, student, linkedCount: keepIds.length, mergedDuplicates: dropIds.length });
-  });
+  }));
 
   // 팀즈 단체반 출석 가져오기 ---------------------------------------------
-  router.post('/teams-import', async (req, res) => {
+  router.post('/teams-import', ah(async (req, res) => {
     const { roomId, classDate, rawText } = req.body || {};
     if (!roomId || !classDate || !rawText) {
       return res.status(400).json({ ok: false, error: 'missing-fields' });
@@ -431,10 +448,10 @@ function buildRouter({ verifyToken, bearer }) {
     }
 
     res.json({ ok: true, matchedCount: matched.length, absentCount, unmatched });
-  });
+  }));
 
   // Stats ----------------------------------------------------------------
-  router.get('/stats', async (req, res) => {
+  router.get('/stats', ah(async (req, res) => {
     const { roomId, from, to } = req.query;
     const clauses = [];
     const params = [];
@@ -455,10 +472,10 @@ function buildRouter({ verifyToken, bearer }) {
       params
     );
     res.json({ ok: true, stats: r.rows });
-  });
+  }));
 
   // Absence / notification queue -----------------------------------------
-  router.get('/absences', async (req, res) => {
+  router.get('/absences', ah(async (req, res) => {
     const r = await db.query(
       `SELECT n.id AS log_id, n.status, n.message, n.created_at, n.sent_by,
               a.class_date, a.room_id, s.id AS student_id, s.name, s.parent_phone
@@ -468,9 +485,9 @@ function buildRouter({ verifyToken, bearer }) {
        ORDER BY n.created_at DESC LIMIT 200`
     );
     res.json({ ok: true, items: r.rows, kakaoConfigured: isKakaoConfigured() });
-  });
+  }));
 
-  router.post('/notify', async (req, res) => {
+  router.post('/notify', ah(async (req, res) => {
     const { logId, action } = req.body || {}; // action: 'send' | 'skip'
     if (!logId || !['send', 'skip'].includes(action)) {
       return res.status(400).json({ ok: false, error: 'bad-request' });
@@ -483,15 +500,15 @@ function buildRouter({ verifyToken, bearer }) {
     );
     if (!r.rows[0]) return res.status(409).json({ ok: false, error: 'already-resolved' });
     res.json({ ok: true });
-  });
+  }));
 
   // Auto-send toggle, per room ---------------------------------------------
-  router.get('/settings', async (req, res) => {
+  router.get('/settings', ah(async (req, res) => {
     const r = await db.query('SELECT room_id, auto_send FROM notification_settings');
     res.json({ ok: true, settings: r.rows, kakaoConfigured: isKakaoConfigured() });
-  });
+  }));
 
-  router.post('/settings/:roomId', async (req, res) => {
+  router.post('/settings/:roomId', ah(async (req, res) => {
     const autoSend = !!(req.body && req.body.autoSend);
     await db.query(
       `INSERT INTO notification_settings (room_id, auto_send) VALUES ($1,$2)
@@ -499,7 +516,7 @@ function buildRouter({ verifyToken, bearer }) {
       [req.params.roomId, autoSend]
     );
     res.json({ ok: true, kakaoConfigured: isKakaoConfigured() });
-  });
+  }));
 
   return router;
 }
@@ -509,7 +526,7 @@ function buildRouter({ verifyToken, bearer }) {
 // 이 값이 설정돼 있지 않으면 항상 503을 반환해 실수로 열려있지 않게 한다.
 function buildWebhookRouter() {
   const router = express.Router();
-  router.post('/', async (req, res) => {
+  router.post('/', ah(async (req, res) => {
     const secret = process.env.SMS_INTAKE_SECRET || '';
     if (!secret) return res.status(503).json({ ok: false, error: 'sms-intake-not-configured' });
     if (!db.enabled) return res.status(503).json({ ok: false, error: 'db-not-configured' });
@@ -528,7 +545,7 @@ function buildWebhookRouter() {
       );
     }
     res.json({ ok: true, count: blocks.length });
-  });
+  }));
   return router;
 }
 
