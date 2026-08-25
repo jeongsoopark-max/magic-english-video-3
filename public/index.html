@@ -524,6 +524,7 @@
                 <button type="button" onclick="switchAttTab('roster')" id="attTabBtn_roster" class="att-tab-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-800 text-white">👤 학생 명부</button>
                 <button type="button" onclick="switchAttTab('teams')" id="attTabBtn_teams" class="att-tab-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600">💻 팀즈 출석</button>
                 <button type="button" onclick="switchAttTab('unmatched')" id="attTabBtn_unmatched" class="att-tab-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600">❓ 미매칭 출석</button>
+                <button type="button" onclick="switchAttTab('sms')" id="attTabBtn_sms" class="att-tab-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600">📩 문자 가져오기</button>
                 <button type="button" onclick="switchAttTab('stats')" id="attTabBtn_stats" class="att-tab-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600">📊 출석 통계</button>
                 <button type="button" onclick="switchAttTab('absences')" id="attTabBtn_absences" class="att-tab-btn px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600">🔔 결석 알림</button>
             </div>
@@ -598,6 +599,47 @@
                             <th class="p-2">이름(입력값)</th><th class="p-2">반</th><th class="p-2">출석 횟수</th><th class="p-2">최근 출석일</th><th class="p-2"></th>
                         </tr></thead>
                         <tbody id="attUnmatchedBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 문자로 들어온 학생 정보 가져오기 -->
+            <div id="attTab_sms" class="space-y-3 hidden">
+                <p class="text-[11px] text-slate-500 leading-relaxed p-3 bg-slate-100 rounded-xl border border-slate-200">
+                    "이름(태그)" 줄 아래에 <b class="text-slate-700">생 010...</b>(학생 번호), <b class="text-slate-700">모 010...</b>(학부모 번호)가 있는 문자를 그대로 붙여넣으세요. 여러 건을 한 번에 붙여넣어도 자동으로 나눠 인식합니다.
+                    MacroDroid 같은 폰 자동화 앱으로 문자 수신 시 자동 전송하도록 연동할 수도 있습니다 — 필요하시면 설정 방법을 알려드릴게요.
+                </p>
+                <textarea id="attSmsPaste" rows="6" placeholder="여기에 문자 내용을 붙여넣으세요" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono"></textarea>
+                <button type="button" onclick="importSmsText()" class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 font-bold rounded-lg text-xs px-4 py-2">📥 붙여넣은 내용 가져오기</button>
+                <div id="attSmsResult" class="text-xs text-slate-600"></div>
+
+                <hr class="border-slate-200">
+
+                <div id="attSmsRegisterBox" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
+                    <p class="text-xs font-bold text-slate-700">등록: <span id="attSmsRegName"></span> (학부모 <span id="attSmsRegPhone"></span>)</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <select id="attSmsRoom" class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                            <option value="basic">Basic</option>
+                            <option value="grammar">Grammar</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="private">Private</option>
+                        </select>
+                        <input type="text" id="attSmsDays" placeholder="요일 (예: mon,wed,fri)" class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                        <input type="text" id="attSmsTime" placeholder="시작시각 (예: 16:00)" class="bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="confirmSmsRegister()" class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 font-bold rounded-lg text-xs px-4 py-2">✅ 학생 등록</button>
+                        <button type="button" onclick="cancelSmsRegister()" class="bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg text-xs px-4 py-2">취소</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-[280px] overflow-y-auto border border-slate-200 rounded-xl">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-100 text-slate-500 sticky top-0"><tr>
+                            <th class="p-2">이름</th><th class="p-2">학생 번호</th><th class="p-2">학부모 번호</th><th class="p-2"></th>
+                        </tr></thead>
+                        <tbody id="attSmsPendingBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1151,7 +1193,7 @@
 
         function switchAttTab(tab) {
             attCurrentTab = tab;
-            ['roster', 'teams', 'unmatched', 'stats', 'absences'].forEach(function (t) {
+            ['roster', 'teams', 'unmatched', 'sms', 'stats', 'absences'].forEach(function (t) {
                 document.getElementById('attTab_' + t).classList.toggle('hidden', t !== tab);
                 const btn = document.getElementById('attTabBtn_' + t);
                 btn.classList.toggle('bg-slate-800', t === tab);
@@ -1166,6 +1208,7 @@
                 }
             }
             else if (tab === 'unmatched') loadUnmatched();
+            else if (tab === 'sms') loadSmsPending();
             else if (tab === 'stats') loadStats();
             else if (tab === 'absences') { loadAbsences(); loadAutoToggleState(); }
         }
@@ -1390,6 +1433,83 @@
             const on = document.getElementById('attAutoToggle').checked;
             await attFetch('/settings/' + room, { method: 'POST', body: JSON.stringify({ autoSend: on }) });
             triggerToast(on ? '✅ ' + room + ' 반 자동 발송을 켰습니다.' : '➖ ' + room + ' 반 자동 발송을 껐습니다.');
+        }
+
+        async function importSmsText() {
+            const rawText = document.getElementById('attSmsPaste').value;
+            const resultBox = document.getElementById('attSmsResult');
+            if (!rawText.trim()) { triggerToast('⚠️ 문자 내용을 붙여넣어 주세요.'); return; }
+            resultBox.textContent = '처리 중...';
+            const j = await attFetch('/sms-import', { method: 'POST', body: JSON.stringify({ rawText: rawText }) });
+            if (!j || !j.ok) { resultBox.textContent = '⚠️ 가져오기에 실패했습니다.'; return; }
+            resultBox.textContent = '✅ ' + j.count + '건 인식되어 대기열에 추가되었습니다.';
+            document.getElementById('attSmsPaste').value = '';
+            loadSmsPending();
+        }
+
+        let attSmsSelectedId = null;
+
+        async function loadSmsPending() {
+            const j = await attFetch('/sms-pending');
+            if (!j) return;
+            const body = document.getElementById('attSmsPendingBody');
+            body.innerHTML = '';
+            if (!j.items || j.items.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">대기 중인 문자 정보가 없습니다.</td></tr>';
+                return;
+            }
+            j.items.forEach(function (it) {
+                const tr = document.createElement('tr');
+                tr.className = 'border-t border-slate-100';
+                tr.innerHTML =
+                    '<td class="p-2 font-bold">' + escapeHtml(it.name) + '</td>' +
+                    '<td class="p-2">' + escapeHtml(it.student_phone || '-') + '</td>' +
+                    '<td class="p-2">' + escapeHtml(it.parent_phone || '-') + '</td>' +
+                    '<td class="p-2 flex gap-2">' +
+                    '<button class="bg-brand-accent hover:bg-brand-accentHover text-slate-900 px-3 py-1.5 rounded-lg text-[11px] font-bold" onclick="startSmsRegister(' + it.id + ',' + JSON.stringify(it.name) + ',' + JSON.stringify(it.parent_phone || '') + ')">학생으로 등록</button>' +
+                    '<button class="bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1.5 rounded-lg text-[11px] font-bold" onclick="deleteSmsPending(' + it.id + ')">삭제</button>' +
+                    '</td>';
+                body.appendChild(tr);
+            });
+        }
+
+        function startSmsRegister(id, name, parentPhone) {
+            attSmsSelectedId = id;
+            document.getElementById('attSmsRegName').textContent = name;
+            document.getElementById('attSmsRegPhone').textContent = parentPhone || '미확인';
+            document.getElementById('attSmsDays').value = '';
+            document.getElementById('attSmsTime').value = '';
+            document.getElementById('attSmsRegisterBox').classList.remove('hidden');
+            document.getElementById('attSmsRegisterBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function cancelSmsRegister() {
+            attSmsSelectedId = null;
+            document.getElementById('attSmsRegisterBox').classList.add('hidden');
+        }
+
+        async function confirmSmsRegister() {
+            if (!attSmsSelectedId) return;
+            const roomId = document.getElementById('attSmsRoom').value;
+            const scheduleDays = document.getElementById('attSmsDays').value.trim();
+            const scheduleTime = document.getElementById('attSmsTime').value.trim();
+            const j = await attFetch('/sms-pending/' + attSmsSelectedId + '/claim', {
+                method: 'POST',
+                body: JSON.stringify({ roomId: roomId, scheduleDays: scheduleDays, scheduleTime: scheduleTime }),
+            });
+            if (j && j.ok) {
+                triggerToast('✅ 학생 명부에 등록되었습니다.');
+                cancelSmsRegister();
+                loadSmsPending();
+            } else {
+                triggerToast('⚠️ 등록 실패');
+            }
+        }
+
+        async function deleteSmsPending(id) {
+            if (!confirm('이 항목을 삭제할까요?')) return;
+            await attFetch('/sms-pending/' + id, { method: 'DELETE' });
+            loadSmsPending();
         }
 
         function escapeHtml(str) {
